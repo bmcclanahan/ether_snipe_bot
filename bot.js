@@ -89,7 +89,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       let date = liquidityAddDate.toISOString()
                                  .replace(/T/, ' ')      // replace T with a space
                                  .replace(/\..+/, '');
-      let timeElapsed = tokenCreationDate - liquidityAddDate;
+      let timeElapsed = liquidityAddDate - tokenCreationDate;
       newListings[token].numTransactions++;
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
