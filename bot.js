@@ -68,7 +68,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   newListings[tokenOut] = { // might not need this
     pairAddress: pairAddress,
     position: position,
-
+    numTransactions: 0
   };
   pair.on('Sync', (function() {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
@@ -90,15 +90,20 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
                                  .replace(/T/, ' ')      // replace T with a space
                                  .replace(/\..+/, '');
       let timeElapsed = tokenCreationDate - liquidityAddDate;
+      newListings[token].numTransactions++;
+      let tokenLiquidity = tokLiquidity / (10 ** 18);
+      let etherLiquidity = ethLiquidity / (10 ** 18);
       console.log(`
         Liquitidy modified for token
         =================
         token: ${token}
-        token liquidity: ${tokLiquidity}
-        ether liquidity: ${ethLiquidity}
+        token liquidity: ${tokenLiquidity}
+        ether liquidity: ${etherLiquidity}
+        ether/token ratio: ${etherLiquidity / tokenLiquidity}
         pairAddress: ${tokenPair}
         time: ${date}
         time from pair creation: ${timeElapsed}
+        num transactions: ${newListings[token].numTransactions}
       `);
     }
   })());
