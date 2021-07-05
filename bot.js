@@ -149,8 +149,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         Liquitidy modified for token
         =================
         token: ${token}
-        token name: ${tokenName}
-        tokan symbol: ${tokenSymbol}
+        token name: ${tokenNameInner}
+        tokan symbol: ${tokenSymbolInner}
         token liquidity: ${tokenLiquidity}
         ether liquidity: ${etherLiquidity}
         ether/token ratio: ${etherLiquidity / tokenLiquidity}
