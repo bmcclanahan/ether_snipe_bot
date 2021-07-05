@@ -1,5 +1,11 @@
+const axios = require('axios');
 const ethers = require('ethers');
 const fs = require('fs')
+//let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8')
+//console.log("gas api ", gasApiKey)
+
+const uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
+let pairAddress = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11'
 let mnemonic = fs.readFileSync('/Users/brianmcclanahan/ether/mne.txt', 'utf8')
 mnemonic = mnemonic.substring(0, mnemonic.length - 1)
 
@@ -61,22 +67,68 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     pairAddress,
     [
       'event Sync(uint112 reserve0, uint112 reserve0)',
+      'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)'
     ],
     account
   );
+
+  let tokenContract = new ethers.Contract(
+    tokenOut,
+    [
+      'function name() public view returns (string)',
+      'function symbol() public view returns (string)'
+    ],
+    account
+  ); 
 
   newListings[tokenOut] = { // might not need this
     pairAddress: pairAddress,
     position: position,
     numTransactions: 0
   };
+  let tokReserve0, tokReserve1;
+  let ethLiquidity, tokLiquidity;
+  result =  await pair.getReserves() // figure out how to use destructuring to get this
+  tokReserve0 = result[0]
+  tokReserve1 = result[1]
+  if(position == 0){
+    ethLiquidity = tokReserve1;
+    tokLiquidity = tokReserve0;
+  }
+  else {
+    ethLiquidity = tokReserve0;
+    tokLiquidity = tokReserve1;
+  }
+
+  tokenName = await tokenContract.name()
+  tokenSymbol = await tokenContract.symbol()
+  var logCreationDate = new Date(Date.now() + offset*60*1000)
+  date = logCreationDate.toISOString()
+                        .replace(/T/, ' ')      // replace T with a space
+                        .replace(/\..+/, '');
+  var divisorStr = "1000000000000000000"                      
+  console.log(`
+        Initial Liquidity for token
+        =================
+        token: ${tokenOut}
+        token name: ${tokenName}
+        tokan symbol: ${tokenSymbol}
+        token liquidity: ${tokLiquidity.div(ethers.BigNumber.from(divisorStr)).toString()}
+        ether liquidity: ${ethLiquidity.div(ethers.BigNumber.from(divisorStr)).toString()}
+        ether/token ratio: ${ethLiquidity.div(tokLiquidity).toString()}
+        pairAddress: ${pairAddress}
+        time: ${date}
+      `);
+
   pair.on('Sync', (function() {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
     let tokenPosition = position;
     let tokenPair = pairAddress;
     let tokenCreationDate = creationDate;
+    let tokenNameInner = tokenName
+    let tokenSymbolInner =tokenSymbol
     return function(reserve0, reserve1) {
-      let ethLiquidity, tokLiquidity;
+  
       if(tokenPosition == 0){
         ethLiquidity = reserve1;
         tokLiquidity = reserve0;
@@ -97,6 +149,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         Liquitidy modified for token
         =================
         token: ${token}
+        token name: ${tokenName}
+        tokan symbol: ${tokenSymbol}
         token liquidity: ${tokenLiquidity}
         ether liquidity: ${etherLiquidity}
         ether/token ratio: ${etherLiquidity / tokenLiquidity}
