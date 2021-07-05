@@ -107,7 +107,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
                         .replace(/T/, ' ')      // replace T with a space
                         .replace(/\..+/, '');
   var divisorStr = "1000000000000000000"                      
-  console.log(`
+  
+  try {
+    console.log(`
         Initial Liquidity for token
         =================
         token: ${tokenOut}
@@ -119,6 +121,21 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         pairAddress: ${pairAddress}
         time: ${date}
       `);
+  } catch (error) {
+    console.log(`
+        Initial Liquidity for token
+        =================
+        token: ${tokenOut}
+        token name: ${tokenName}
+        tokan symbol: ${tokenSymbol}
+        token liquidity: ${tokLiquidity.div(ethers.BigNumber.from(divisorStr)).toString()}
+        ether liquidity: ${ethLiquidity.div(ethers.BigNumber.from(divisorStr)).toString()}
+        ether/token ratio: 'not defined'
+        pairAddress: ${pairAddress}
+        time: ${date}
+      `);
+  }
+      
 
   pair.on('Sync', (function() {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
