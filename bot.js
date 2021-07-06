@@ -2,17 +2,12 @@ const axios = require('axios');
 const ethers = require('ethers');
 
 
-const fs = require('fs')
-let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8')
-let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`
-let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
-let mnemonic = fs.readFileSync('/Users/brianmcclanahan/ether/mne.txt', 'utf8')
-mnemonic = mnemonic.substring(0, mnemonic.length - 1)
-
-async function getGasPrices(){
-  response = await axios.get(gasApiURL);
-  return response.data;
-}
+const fs = require('fs');
+let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
+let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
+let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
+let mnemonic = fs.readFileSync('/Users/brianmcclanahan/ether/mne.txt', 'utf8');
+mnemonic = mnemonic.substring(0, mnemonic.length - 1);
 
 async function getEtherPrice(){
   response = await axios.post(uniswapApi, {
@@ -24,7 +19,13 @@ async function getEtherPrice(){
     }
     `
   });
-  return parseFloat(response.data.data.bundle.ethPrice).toFixed(2);
+  return Math.round(response.data.data.bundle.ethPrice * 100) / 100;
+}
+
+
+async function getGasPrices(){
+  response = await axios.get(gasApiURL);
+  return response.data;
 }
 
 const addresses = {
