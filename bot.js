@@ -19,7 +19,7 @@ async function getEtherPrice(){
     }
     `
   });
-  return Math.round(response.data.data.bundle.ethPrice * 100) / 100;
+  return Math.ceil(response.data.data.bundle.ethPrice);
 }
 
 
@@ -128,14 +128,13 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let divisorStr = "1000000000000000000"
 
   //estimating transaction cost
-  let transactionCost = ethers.BigNumber.from(201101)
+  let transactionCost = 201101
   let gasPrice = await getGasPrices();
   
   let etherPrice = await getEtherPrice();
   
-  let transactionCostEther = transactionCost.mul(ethers.BigNumber.from(10000000000 * gasPrice.fastest));
-  let transactionCostDollar = transactionCostEther.div(ethers.BigNumber.from(divisorStr))
-                                                  .mul(ethers.BigNumber.from(etherPrice));
+  let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
+  let transactionCostDollar = transactionCostEther * etherPrice;
   
   try {
     console.log(`
