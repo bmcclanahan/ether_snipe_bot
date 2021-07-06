@@ -1,13 +1,31 @@
 const axios = require('axios');
 const ethers = require('ethers');
-const fs = require('fs')
-//let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8')
-//console.log("gas api ", gasApiKey)
 
-const uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
-let pairAddress = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11'
+
+const fs = require('fs')
+let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8')
+let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`
+let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
 let mnemonic = fs.readFileSync('/Users/brianmcclanahan/ether/mne.txt', 'utf8')
 mnemonic = mnemonic.substring(0, mnemonic.length - 1)
+
+async function getGasPrices(){
+  response = await axios.get(gasApiURL);
+  return response.data;
+}
+
+async function getEtherPrice(){
+  response = await axios.post(uniswapApi, {
+    query: `
+    {
+      bundle(id: "1" ) {
+        ethPrice
+      }
+    }
+    `
+  });
+  return parseFloat(response.data.data.bundle.ethPrice).toFixed(2);
+}
 
 const addresses = {
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -102,11 +120,21 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   tokenName = await tokenContract.name()
   tokenSymbol = await tokenContract.symbol()
-  var logCreationDate = new Date(Date.now() + offset*60*1000)
+  let logCreationDate = new Date(Date.now() + offset*60*1000)
   date = logCreationDate.toISOString()
                         .replace(/T/, ' ')      // replace T with a space
                         .replace(/\..+/, '');
-  var divisorStr = "1000000000000000000"                      
+  let divisorStr = "1000000000000000000"
+
+  //estimating transaction cost
+  let transactionCost = ethers.BigNumber.from(201101)
+  let gasPrice = await getGasPrices();
+  
+  let etherPrice = await getEtherPrice();
+  
+  let transactionCostEther = transactionCost.mul(ethers.BigNumber.from(10000000000 * gasPrice.fastest));
+  let transactionCostDollar = transactionCostEther.div(ethers.BigNumber.from(divisorStr))
+                                                  .mul(ethers.BigNumber.from(etherPrice));
   
   try {
     console.log(`
@@ -119,8 +147,15 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         ether liquidity: ${ethLiquidity.div(ethers.BigNumber.from(divisorStr)).toString()}
         ether/token ratio: ${ethLiquidity.div(tokLiquidity).toString()}
         pairAddress: ${pairAddress}
+        transaction cost units: ${transactionCost.toString()}
+        transaction cost ether: ${transactionCostEther}
+        transaction cost dollar: ${transactionCostDollar}
+        ether price UDS: ${etherPrice} 
         time: ${date}
       `);
+      //transaction cost units: ${transactionCost.toString()}
+      //transaction cost ether: ${transactionCostEther}
+      //transaction cost dollar: ${transactionCostDollar}
   } catch (error) {
     console.log(`
         Initial Liquidity for token
