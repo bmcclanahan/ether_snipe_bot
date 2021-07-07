@@ -62,7 +62,7 @@ var new_pair_stream = fs.createWriteStream(`${csv_folder}/new_pairs_${filetimest
 new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar\n");
 var liquidity_update_stream = fs.createWriteStream(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, {flags:'a'});
 liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions\n")
-
+console.log("registering pair created event")
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   
   var creationDate = new Date(Date.now() + offset*60*1000)
@@ -134,8 +134,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   date = logCreationDate.toISOString()
                         .replace(/T/, ' ')      // replace T with a space
                         .replace(/\..+/, '');
-  let divisorStr = "1000000000000000000"
-  let divisorStrSmall = "1000000000000000"
+                        
+  let divisorStr = "1000000000000000"
 
 
   //estimating transaction cost
@@ -151,7 +151,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStrSmall)).toNumber() / 1000.0
   let etherTokenRatio = -1
   try {
-    etherTokenRatio = etherLiquidityFloat /etherLiquidityFloat
+    etherTokenRatio = etherLiquidityFloat / tokenLiquitityFloat
   }
   catch(error) {
     etherTokenRatio = -1
