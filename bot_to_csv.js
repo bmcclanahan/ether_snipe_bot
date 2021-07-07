@@ -147,14 +147,14 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
   let transactionCostDollar = transactionCostEther * etherPrice;
 
-  let tokenLiquitityFloat = tokLiquidity.div(ethers.BigNumber.from(divisorStr)).toNumber() / 1000.0
-  let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStr)).toNumber() / 1000.0
+  let tokenLiquitityFloat = tokLiquidity.div(ethers.BigNumber.from(divisorStr)) 
+  let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStr))
   let etherTokenRatio = -1
   try {
-    etherTokenRatio = etherLiquidityFloat / tokenLiquitityFloat
+    etherTokenRatio = etherLiquidityFloat.div(tokenLiquitityFloat).toString()
   }
   catch(error) {
-    etherTokenRatio = -1
+    etherTokenRatio = "-1"
   }  
   console.log(`
       Initial Liquidity for token
