@@ -134,7 +134,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   date = logCreationDate.toISOString()
                         .replace(/T/, ' ')      // replace T with a space
                         .replace(/\..+/, '');
-                        
+
   let divisorStr = "1000000000000000"
 
 
@@ -147,8 +147,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
   let transactionCostDollar = transactionCostEther * etherPrice;
 
-  let tokenLiquitityFloat = tokLiquidity.div(ethers.BigNumber.from(divisorStrSmall)).toNumber() / 1000.0
-  let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStrSmall)).toNumber() / 1000.0
+  let tokenLiquitityFloat = tokLiquidity.div(ethers.BigNumber.from(divisorStr)).toNumber() / 1000.0
+  let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStr)).toNumber() / 1000.0
   let etherTokenRatio = -1
   try {
     etherTokenRatio = etherLiquidityFloat / tokenLiquitityFloat
