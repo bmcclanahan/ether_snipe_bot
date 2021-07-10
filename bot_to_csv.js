@@ -1,9 +1,10 @@
 const axios = require('axios');
 const ethers = require('ethers');
+const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
 
-let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu']);
-let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official']);
+let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu', 'AAPE', '$AAPE']);
+let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official', 'AstroApe', '🦍ASTROAPE']);
 let possibleContractStarts = ['0x87912MLJ90192']
 
 
