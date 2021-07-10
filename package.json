@@ -7,12 +7,19 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ethers": "^5.0.32"
+    "axios": "^0.21.1",
+    "ethers": "^5.0.32",
+    "fuzzyset": "^1.0.6",
+    "graphql": "^15.5.1"
+  },
+  "devDependencies": {
+    "bufferutil": "^4.0.3",
+    "jest": "^27.0.6"
   }
 }

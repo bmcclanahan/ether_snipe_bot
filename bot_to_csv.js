@@ -1,5 +1,10 @@
 const axios = require('axios');
 const ethers = require('ethers');
+const utils = require("./utils")
+
+let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu']);
+let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official']);
+let possibleContractStarts = ['0x87912MLJ90192']
 
 
 const fs = require('fs');
@@ -59,7 +64,7 @@ var newListings = {};
 var offset = -240;
 var filetimestamp = Date.now() + offset*60*1000
 var new_pair_stream = fs.createWriteStream(`${csv_folder}/new_pairs_${filetimestamp}.csv`, {flags:'a'});
-new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar\n");
+new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match\n");
 var liquidity_update_stream = fs.createWriteStream(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, {flags:'a'});
 liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions\n")
 console.log("registering pair created event")
@@ -109,11 +114,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     account
   ); 
 
-  newListings[tokenOut] = { // might not need this
-    pairAddress: pairAddress,
-    position: position,
-    numTransactions: 0
-  };
   let tokReserve0, tokReserve1;
   let ethLiquidity, tokLiquidity;
   result =  await pair.getReserves() // figure out how to use destructuring to get this
@@ -130,6 +130,20 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   tokenName = await tokenContract.name()
   tokenSymbol = await tokenContract.symbol()
+  newListings[tokenOut] = { // might not need this
+    pairAddress: pairAddress,
+    position: position,
+    numTransactions: 0,
+    name: tokenName,
+    symbol: tokenSymbol,
+    contract: tokenOut
+  };
+
+  newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
+  newListings[tokenOut].contractMatch = utils.checkMatchAny(newListings[tokenOut], possibleContractStarts);
+
+
+
   let logCreationDate = new Date(Date.now() + offset*60*1000)
   date = logCreationDate.toISOString()
                         .replace(/T/, ' ')      // replace T with a space
@@ -171,8 +185,10 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       transaction cost dollar: ${transactionCostDollar}
       ether price UDS: ${etherPrice} 
       time: ${date}
+      any match: ${newListings[tokenOut].anyMatch}
+      contract match: ${newListings[tokenOut].contractMatch}
     `);
-    new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}\n`);
+    new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
 
  
       

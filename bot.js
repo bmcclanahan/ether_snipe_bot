@@ -1,6 +1,27 @@
 const axios = require('axios');
 const ethers = require('ethers');
+const FuzzySet = require('fuzzyset')
+const utils = require("./utils")
 
+possibleSymbols = FuzzySet(['MBULL', 'ANON']);
+possibleNames = FuzzySet(['mega bull', 'anonymous']);
+
+console.log(utils.checkMatch)
+
+/*
+function checkMatch(
+  record, possibleSymbols, possibleNames, possibleContractStarts,
+  symbolThresh = 0.75, nameThresh = 0.75
+  ) {
+  let match = False;
+  if(possibleSymbols.get(record.symbol, [], symbolThresh).length > 0)
+    match = true
+  else if (possibleNames.get(record.name, [], nameThresh).length > 0)
+    match = true
+  else if (possibleContractStarts.some(x => record.contract.startsWith(x)))
+    match = true
+  return match
+}
 
 const fs = require('fs');
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
@@ -241,6 +262,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   const receipt = await tx.wait(); 
   console.log('Transaction receipt');
   console.log(receipt);
-  */
-});
+  
+});*/
 
