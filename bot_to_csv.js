@@ -141,7 +141,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   };
 
   newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
-  newListings[tokenOut].contractMatch = utils.checkMatchAny(newListings[tokenOut], possibleContractStarts);
+  newListings[tokenOut].contractMatch = utils.checkContractMatch(newListings[tokenOut], possibleContractStarts);
 
 
 
