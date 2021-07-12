@@ -192,9 +192,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   `
   console.log(message);
   new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
-  utils.sendNotification(phoneNumbers, message)
+  if(newListings[tokenOut].anyMatch || newListings[tokenOut].contractMatch)
+    utils.sendNotification(phoneNumbers, message);
       
-
   pair.on('Sync', (function() {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
     let tokenPosition = position;
