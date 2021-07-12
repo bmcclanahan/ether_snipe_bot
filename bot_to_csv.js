@@ -15,7 +15,6 @@ let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8
 let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
 let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
 const csv_folder = '/Users/brianmcclanahan/ether_new_transactions'
-mnemonic = mnemonic.substring(0, mnemonic.length - 1);
 
 async function getEtherPrice(){
   response = await axios.post(uniswapApi, {
