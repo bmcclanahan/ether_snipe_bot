@@ -1,15 +1,16 @@
 const axios = require('axios');
+const fs = require('fs');
 const ethers = require('ethers');
 const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
 
-let phoneNumbers = ["4345796117"]
+let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu', 'AAPE', '$AAPE']);
 let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official', 'AstroApe', '🦍ASTROAPE']);
 let possibleContractStarts = ['0x87912MLJ90192']
 
 
-const fs = require('fs');
+
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
 let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
 let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
@@ -68,7 +69,7 @@ var filetimestamp = Date.now() + offset*60*1000
 var new_pair_stream = fs.createWriteStream(`${csv_folder}/new_pairs_${filetimestamp}.csv`, {flags:'a'});
 new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match\n");
 var liquidity_update_stream = fs.createWriteStream(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, {flags:'a'});
-liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions\n")
+liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool\n")
 console.log("registering pair created event")
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   
@@ -132,13 +133,18 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   tokenName = await tokenContract.name()
   tokenSymbol = await tokenContract.symbol()
+  let listingDate = new Date(Date.now() + offset*60*1000)
   newListings[tokenOut] = { // might not need this
     pairAddress: pairAddress,
     position: position,
     numTransactions: 0,
     name: tokenName,
     symbol: tokenSymbol,
-    contract: tokenOut
+    contract: tokenOut,
+    listingDate: listingDate,
+    timeElapsed: 0,
+    transactionPerSecond: 0,
+    transactionPerSecondBool: false
   };
 
   newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
@@ -146,16 +152,16 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
 
 
-  let logCreationDate = new Date(Date.now() + offset*60*1000)
-  date = logCreationDate.toISOString()
-                        .replace(/T/, ' ')      // replace T with a space
-                        .replace(/\..+/, '');
+ 
+  date = listingDate.toISOString()
+                     .replace(/T/, ' ')      // replace T with a space
+                     .replace(/\..+/, '');
 
-  let divisorStr = "1000000000000000"
+  let divisorStr = "1000000000000000";
 
 
   //estimating transaction cost
-  let transactionCost = 201101
+  let transactionCost = 201101;
   let gasPrice = await getGasPrices();
   
   let etherPrice = await getEtherPrice();
@@ -220,6 +226,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       newListings[token].numTransactions++;
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
+      newListings[token].timeElapsed = (liquidityAddDate - newListings[token].listingDate) / 1000;
+      newListings[token].transactionPerSecond = newListings[token].numTransactions / newListings[token].timeElapsed;
       console.log(`
         Liquitidy modified for token
         =================
@@ -233,8 +241,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         time: ${date}
         time from pair creation: ${timeElapsed}
         num transactions: ${newListings[token].numTransactions}
+        timeElapsed: ${newListings[token].timeElapsed},
+        transactionPerSecond: ${newListings[token].transactionPerSecond},
+        transactionPerSecondBool: ${newListings[token].transactionPerSecondBool}
       `);
-      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}\n`)
+      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}\n`)
     }
   })());
 

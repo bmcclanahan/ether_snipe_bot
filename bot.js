@@ -2,20 +2,38 @@ const axios = require('axios');
 const ethers = require('ethers');
 const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
+const fs = require('fs');
 
+let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 
-let phoneNumbers = ["4345796117"]
 
 let message = `
-  testing: ${4 +4}
+  new testing: ${4 +4}
   multiple lines: ${3+6}
 `
+
+async function init() {
+  
+  await sleep(1000);
+  
+}
+
+
+let offset = 240
+let listingDate1 = new Date(Date.now() + offset*60*1000)
+
+setTimeout(function() {
+  let listingDate2 = new Date(Date.now() + offset*60*1000)
+  console.log(listingDate1, listingDate2, (listingDate2 - listingDate1) /12.9)
+}, 1000);
+
+/*console.log(message)
 let test = true
 if(test)
   utils.sendNotification(phoneNumbers, message);
 
 
-/*
+
 possibleSymbols = FuzzySet(['MBULL', 'ANON']);
 possibleNames = FuzzySet(['mega bull', 'anonymous']);
 
@@ -36,7 +54,7 @@ function checkMatch(
   return match
 }
 
-const fs = require('fs');
+
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
 let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
 let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
@@ -72,6 +90,17 @@ const addresses = {
 const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
 const wallet = ethers.Wallet.fromMnemonic(mnemonic);
 const account = wallet.connect(provider);
+
+async function getBalance(){
+  let balance = await provider.getBalance(wallet.address);
+  console.log("my balance is ", balance)
+}
+getBalance();
+
+
+
+
+/*
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
