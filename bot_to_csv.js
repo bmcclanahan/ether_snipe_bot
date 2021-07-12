@@ -14,7 +14,6 @@ let possibleContractStarts = ['0x87912MLJ90192']
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
 let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
 let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
-let mnemonic = fs.readFileSync('/Users/brianmcclanahan/ether/mne.txt', 'utf8');
 const csv_folder = '/Users/brianmcclanahan/ether_new_transactions'
 mnemonic = mnemonic.substring(0, mnemonic.length - 1);
 
@@ -45,7 +44,8 @@ const addresses = {
 }
 
 const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
-const wallet = ethers.Wallet.fromMnemonic(mnemonic);
+const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
+const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
 const account = wallet.connect(provider);
 const factory = new ethers.Contract(
   addresses.factory,
@@ -157,9 +157,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
                      .replace(/T/, ' ')      // replace T with a space
                      .replace(/\..+/, '');
 
-  let divisorStr = "1000000000000000";
-
-
   //estimating transaction cost
   let transactionCost = 201101;
   let gasPrice = await getGasPrices();
@@ -169,8 +166,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
   let transactionCostDollar = transactionCostEther * etherPrice;
 
-  let tokenLiquitityFloat = tokLiquidity.div(ethers.BigNumber.from(divisorStr)) 
-  let etherLiquidityFloat = ethLiquidity.div(ethers.BigNumber.from(divisorStr))
+  let tokenLiquitityFloat = ethers.utils.formatEther(tokLiquidity);
+  let etherLiquidityFloat = ethers.utils.formatEther(ethLiquidity);
   let etherTokenRatio = -1
   try {
     etherTokenRatio = etherLiquidityFloat.div(tokenLiquitityFloat).toString()
@@ -197,7 +194,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     contract match: ${newListings[tokenOut].contractMatch}
   `
   console.log(message);
-  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
+  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat}, ${etherLiquidityFloat}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
   if(newListings[tokenOut].anyMatch || newListings[tokenOut].contractMatch)
     utils.sendNotification(phoneNumbers, message);
       

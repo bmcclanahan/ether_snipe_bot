@@ -19,20 +19,14 @@ async function init() {
 }
 
 
-let offset = 240
-let listingDate1 = new Date(Date.now() + offset*60*1000)
 
-setTimeout(function() {
-  let listingDate2 = new Date(Date.now() + offset*60*1000)
-  console.log(listingDate1, listingDate2, (listingDate2 - listingDate1) /12.9)
-}, 1000);
 
 /*console.log(message)
 let test = true
 if(test)
   utils.sendNotification(phoneNumbers, message);
 
-
+*/
 
 possibleSymbols = FuzzySet(['MBULL', 'ANON']);
 possibleNames = FuzzySet(['mega bull', 'anonymous']);
@@ -88,12 +82,15 @@ const addresses = {
 }
 
 const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
-const wallet = ethers.Wallet.fromMnemonic(mnemonic);
+const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
+const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
 const account = wallet.connect(provider);
 
 async function getBalance(){
   let balance = await provider.getBalance(wallet.address);
-  console.log("my balance is ", balance)
+  console.log("my balance is ", balance.toString())
+  console.log("my balance is ", ethers.utils.formatEther)
+  console.log("my balance is ", ethers.utils.formatEther(balance))
 }
 getBalance();
 
