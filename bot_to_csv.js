@@ -3,6 +3,7 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
 
+let phoneNumbers = ["4345796117"]
 let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu', 'AAPE', '$AAPE']);
 let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official', 'AstroApe', '🦍ASTROAPE']);
 let possibleContractStarts = ['0x87912MLJ90192']
@@ -171,27 +172,27 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   catch(error) {
     etherTokenRatio = "-1"
   }  
-  console.log(`
-      Initial Liquidity for token
-      =================
-      token: ${tokenOut}
-      token name: ${tokenName}
-      tokan symbol: ${tokenSymbol}
-      token liquidity: ${tokenLiquitityFloat}
-      ether liquidity: ${etherLiquidityFloat}
-      ether/token ratio: ${etherTokenRatio}
-      pairAddress: ${pairAddress}
-      transaction cost units: ${transactionCost.toString()}
-      transaction cost ether: ${transactionCostEther}
-      transaction cost dollar: ${transactionCostDollar}
-      ether price UDS: ${etherPrice} 
-      time: ${date}
-      any match: ${newListings[tokenOut].anyMatch}
-      contract match: ${newListings[tokenOut].contractMatch}
-    `);
-    new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
-
- 
+  let message = `
+    Initial Liquidity for token
+    =================
+    token: ${tokenOut}
+    token name: ${tokenName}
+    tokan symbol: ${tokenSymbol}
+    token liquidity: ${tokenLiquitityFloat}
+    ether liquidity: ${etherLiquidityFloat}
+    ether/token ratio: ${etherTokenRatio}
+    pairAddress: ${pairAddress}
+    transaction cost units: ${transactionCost.toString()}
+    transaction cost ether: ${transactionCostEther}
+    transaction cost dollar: ${transactionCostDollar}
+    ether price UDS: ${etherPrice} 
+    time: ${date}
+    any match: ${newListings[tokenOut].anyMatch}
+    contract match: ${newListings[tokenOut].contractMatch}
+  `
+  console.log(message);
+  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat.toString()}, ${etherLiquidityFloat.toString()}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
+  utils.sendNotification(phoneNumbers, message)
       
 
   pair.on('Sync', (function() {

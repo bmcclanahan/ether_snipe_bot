@@ -3,12 +3,25 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
 
+
+let phoneNumbers = ["4345796117"]
+
+let message = `
+  testing: ${4 +4}
+  multiple lines: ${3+6}
+`
+let test = true
+if(test)
+  utils.sendNotification(phoneNumbers, message);
+
+
+/*
 possibleSymbols = FuzzySet(['MBULL', 'ANON']);
 possibleNames = FuzzySet(['mega bull', 'anonymous']);
 
 console.log(utils.checkMatch)
 
-/*
+
 function checkMatch(
   record, possibleSymbols, possibleNames, possibleContractStarts,
   symbolThresh = 0.75, nameThresh = 0.75
