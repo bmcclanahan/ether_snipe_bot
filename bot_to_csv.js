@@ -257,9 +257,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         etherPriceInner: ${etherPrice}
       `
       console.log(message);
-      if(newListings[token].anyMatch || newListings[token].contractMatch)
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && liquidityAddFirst)
         utils.sendNotification(phoneNumbers, message);
-      if (liquidityAddFirst)
       liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());
