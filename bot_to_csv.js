@@ -65,10 +65,10 @@ var newListings = {};
 //open pair created csv file
 var offset = -240;
 var filetimestamp = Date.now() + offset*60*1000
-var new_pair_stream = fs.createWriteStream(`${csv_folder}/new_pairs_${filetimestamp}.csv`, {flags:'a'});
-new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match, ether_usd\n");
-var liquidity_update_stream = fs.createWriteStream(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, {flags:'a'});
-liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool, ether_usd\n")
+var new_pair_stream = fs.openSync(`${csv_folder}/new_pairs_${filetimestamp}.csv`, 'w');
+fs.writeSync(new_pair_stream, "token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match, ether_usd\n");
+var liquidity_update_stream = fs.openSync(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, 'w');
+fs.writeSync(liquidity_update_stream, "pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool, ether_usd\n");
 console.log("registering pair created event")
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   
@@ -201,7 +201,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   catch (error) {
     newListings[tokenOut].liquidityDate = listingDate
   }
-  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat}, ${etherLiquidityFloat}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}, ${etherPrice}\n`);
+  fs.writeSync(new_pair_stream, `${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat}, ${etherLiquidityFloat}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}, ${etherPrice}\n`);
   if(newListings[tokenOut].anyMatch || newListings[tokenOut].contractMatch)
     utils.sendNotification(phoneNumbers, message);
       
@@ -259,7 +259,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       console.log(message);
       if((newListings[token].anyMatch || newListings[token].contractMatch) && liquidityAddFirst)
         utils.sendNotification(phoneNumbers, message);
-      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
+        fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());
 
