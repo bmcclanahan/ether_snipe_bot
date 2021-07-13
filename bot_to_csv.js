@@ -66,9 +66,9 @@ var newListings = {};
 var offset = -240;
 var filetimestamp = Date.now() + offset*60*1000
 var new_pair_stream = fs.createWriteStream(`${csv_folder}/new_pairs_${filetimestamp}.csv`, {flags:'a'});
-new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match\n");
+new_pair_stream.write("token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match, ether_usd\n");
 var liquidity_update_stream = fs.createWriteStream(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, {flags:'a'});
-liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool\n")
+liquidity_update_stream.write("pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool, ether_usd\n")
 console.log("registering pair created event")
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   
@@ -141,6 +141,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     symbol: tokenSymbol,
     contract: tokenOut,
     listingDate: listingDate,
+    liquidityDate: -1,
     timeElapsed: 0,
     transactionPerSecond: 0,
     transactionPerSecondBool: false
@@ -191,9 +192,16 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     time: ${date}
     any match: ${newListings[tokenOut].anyMatch}
     contract match: ${newListings[tokenOut].contractMatch}
+    ether price: ${etherPrice}
   `
   console.log(message);
-  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat}, ${etherLiquidityFloat}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}\n`);
+  try{
+    newListings[tokenOut].liquidityDate = ((tokLiquidity.toNumber() == 0) && (ethLiquidity.toNumber() == 0))? -1: listingDate
+  }
+  catch (error) {
+    newListings[tokenOut].liquidityDate = listingDate
+  }
+  new_pair_stream.write(`${tokenOut}, ${tokenName}, ${tokenSymbol}, ${tokenLiquitityFloat}, ${etherLiquidityFloat}, ${etherTokenRatio}, ${pairAddress}, ${date}, ${transactionCostEther}, ${transactionCostDollar}, ${newListings[tokenOut].anyMatch}, ${newListings[tokenOut].contractMatch}, ${etherPrice}\n`);
   if(newListings[tokenOut].anyMatch || newListings[tokenOut].contractMatch)
     utils.sendNotification(phoneNumbers, message);
       
@@ -202,8 +210,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     let tokenPosition = position;
     let tokenPair = pairAddress;
     let tokenCreationDate = creationDate;
-    let tokenNameInner = tokenName
-    let tokenSymbolInner =tokenSymbol
+    let tokenNameInner = tokenName;
+    let tokenSymbolInner = tokenSymbol;
+    let etherPriceInner = etherPrice;
     return function(reserve0, reserve1) {
   
       if(tokenPosition == 0){
@@ -222,8 +231,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       newListings[token].numTransactions++;
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
-      newListings[token].timeElapsed = (liquidityAddDate - newListings[token].listingDate) / 1000;
-      newListings[token].transactionPerSecond = newListings[token].numTransactions / newListings[token].timeElapsed;
+      if((newListings[tokenOut].liquidityDate == -1) && ((tokenLiquidity != 0) && (etherLiquidity !=0)))
+        newListings[tokenOut].liquidityDate = liquidityAddDate
+      newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
+      newListings[token].transactionPerSecond = newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
+      newListings[token].transactionPerSecondBool = newListings[token].transactionPerSecond >= 0.5 // transaction rate threshold
       console.log(`
         Liquitidy modified for token
         =================
@@ -239,9 +251,10 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         num transactions: ${newListings[token].numTransactions}
         timeElapsed: ${newListings[token].timeElapsed},
         transactionPerSecond: ${newListings[token].transactionPerSecond},
-        transactionPerSecondBool: ${newListings[token].transactionPerSecondBool}
+        transactionPerSecondBool: ${newListings[token].transactionPerSecondBool},
+        etherPriceInner: ${etherPriceInner}
       `);
-      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}\n`)
+      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPriceInner}\n`)
     }
   })());
 

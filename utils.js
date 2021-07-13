@@ -2,7 +2,7 @@ const { exec } = require("child_process");
 
 function checkMatchAny(
     record, possibleSymbols, possibleNames, possibleContractStarts,
-    symbolThresh = 0.75, nameThresh = 0.75
+    symbolThresh = 0.9, nameThresh = 0.9
     ) {
     let match = false;
     if(possibleSymbols.get(record.symbol, [], symbolThresh).length > 0)
