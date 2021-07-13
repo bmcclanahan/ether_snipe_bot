@@ -212,7 +212,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     let tokenCreationDate = creationDate;
     let tokenNameInner = tokenName;
     let tokenSymbolInner = tokenSymbol;
-    let etherPriceInner = etherPrice;
     return function(reserve0, reserve1) {
   
       if(tokenPosition == 0){
@@ -231,14 +230,17 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       newListings[token].numTransactions++;
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
-      if((newListings[tokenOut].liquidityDate == -1) && ((tokenLiquidity != 0) && (etherLiquidity !=0)))
+      let liquidityAddFirst = false
+      if((newListings[tokenOut].liquidityDate == -1) && ((tokenLiquidity != 0) && (etherLiquidity !=0))) {
         newListings[tokenOut].liquidityDate = liquidityAddDate
+        liquidityAddFirst = true
+      }
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
       newListings[token].transactionPerSecond = newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
       newListings[token].transactionPerSecondBool = newListings[token].transactionPerSecond >= 0.5 // transaction rate threshold
-      console.log(`
-        Liquitidy modified for token
-        =================
+      let message = `
+      Liquitidy modified for token
+      =================
         token: ${token}
         token name: ${tokenNameInner}
         tokan symbol: ${tokenSymbolInner}
@@ -252,9 +254,13 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         timeElapsed: ${newListings[token].timeElapsed},
         transactionPerSecond: ${newListings[token].transactionPerSecond},
         transactionPerSecondBool: ${newListings[token].transactionPerSecondBool},
-        etherPriceInner: ${etherPriceInner}
-      `);
-      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPriceInner}\n`)
+        etherPriceInner: ${etherPrice}
+      `
+      console.log(message);
+      if(newListings[token].anyMatch || newListings[token].contractMatch)
+        utils.sendNotification(phoneNumbers, message);
+      if (liquidityAddFirst)
+      liquidity_update_stream.write(`${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());
 
