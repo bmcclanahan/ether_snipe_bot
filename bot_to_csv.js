@@ -5,8 +5,8 @@ const FuzzySet = require('fuzzyset')
 const utils = require("./utils")
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
-let possibleSymbols = FuzzySet(['BirdInu', '$BirdInu', 'AAPE', '$AAPE']);
-let possibleNames = FuzzySet(['Bird Inu', 'Bird Inu Official', 'AstroApe', '🦍ASTROAPE']);
+let possibleSymbols = FuzzySet(['CosmosInu']);
+let possibleNames = FuzzySet(['Cosmos Inu']);
 let possibleContractStarts = ['0x87912MLJ90192']
 
 
@@ -144,7 +144,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     liquidityDate: -1,
     timeElapsed: 0,
     transactionPerSecond: 0,
-    transactionPerSecondBool: false
+    transactionPerSecondBool: false,
+    transactionThresholdBreached: false
   };
 
   newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
@@ -238,6 +239,12 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
       newListings[token].transactionPerSecond = newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
       newListings[token].transactionPerSecondBool = newListings[token].transactionPerSecond >= 0.5 // transaction rate threshold
+      let transactionThreshFirst = false
+      if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
+        newListings[token].transactionThresholdBreached = true
+        transactionThreshFirst = true
+      }
+        
       let message = `
       Liquitidy modified for token
       =================
@@ -257,8 +264,14 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         etherPriceInner: ${etherPrice}
       `
       console.log(message);
-      if((newListings[token].anyMatch || newListings[token].contractMatch) && liquidityAddFirst)
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && liquidityAddFirst){
+        message = "liquidity added\n" + message;
         utils.sendNotification(phoneNumbers, message);
+      }
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && transactionThreshFirst){
+        message = "transaction threshold breached\n" + message;
+        utils.sendNotification(phoneNumbers, message);
+      }
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());
