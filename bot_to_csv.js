@@ -80,12 +80,14 @@ async function swap_tokens(tokenIn, tokenOut){
   //Our execution price will be a bit different, we need some flexbility
   // allow 10% slippage
   const amountOutMin = amounts[1].sub(amounts[1].div(10));
-  console.log(`
+  let message = `
     Buying new token
     =================
     tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
     tokenOut: ${amounOutMin.toString()} ${tokenOut}
-  `);
+  `
+  console.log(message);
+  utils.sendNotification(phoneNumbers, message);
   const tx = await router.swapExactTokensForTokens(
     amountIn,
     amountOutMin,
@@ -94,8 +96,11 @@ async function swap_tokens(tokenIn, tokenOut){
     Date.now() + 1000 * 60 * 10 //10 minutes
   );
   const receipt = await tx.wait(); 
-  console.log('Transaction receipt');
-  console.log(receipt);  
+  message = `
+    Transaction receipt: ${receipt}
+  `
+  console.log(message);
+  utils.sendNotification(phoneNumbers, message);
 }
 
 
@@ -297,7 +302,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         message = "liquidity added\n" + message;
         utils.sendNotification(phoneNumbers, message);
       }
-      if((newListings[token].anyMatch || newListings[token].contractMatch) && transactionThreshFirst){
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && transactionThreshFirst && (newListings[token].numTransactions >= 5)){
         message = "transaction threshold breached\n" + message;
         utils.sendNotification(phoneNumbers, message);
       }
