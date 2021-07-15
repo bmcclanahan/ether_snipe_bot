@@ -70,6 +70,35 @@ fs.writeSync(new_pair_stream, "token, token_name, token_symbol, token_liquidity,
 var liquidity_update_stream = fs.openSync(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, 'w');
 fs.writeSync(liquidity_update_stream, "pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool, ether_usd\n");
 console.log("registering pair created event")
+
+
+
+async function swap_tokens(tokenIn, tokenOut){
+  //We buy for 0.1 ETH of the new token
+  const amountIn = ethers.utils.parseUnits('0.05', 'ether');
+  const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
+  //Our execution price will be a bit different, we need some flexbility
+  // allow 10% slippage
+  const amountOutMin = amounts[1].sub(amounts[1].div(10));
+  console.log(`
+    Buying new token
+    =================
+    tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
+    tokenOut: ${amounOutMin.toString()} ${tokenOut}
+  `);
+  const tx = await router.swapExactTokensForTokens(
+    amountIn,
+    amountOutMin,
+    [tokenIn, tokenOut],
+    addresses.recipient,
+    Date.now() + 1000 * 60 * 10 //10 minutes
+  );
+  const receipt = await tx.wait(); 
+  console.log('Transaction receipt');
+  console.log(receipt);  
+}
+
+
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
   
   var creationDate = new Date(Date.now() + offset*60*1000)
@@ -275,34 +304,5 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());
-
-  /*
-  //The quote currency is not WETH
-  if(typeof tokenIn === 'undefined') {
-    return;
-  }
-
-  //We buy for 0.1 ETH of the new token
-  const amountIn = ethers.utils.parseUnits('0.1', 'ether');
-  const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
-  //Our execution price will be a bit different, we need some flexbility
-  const amountOutMin = amounts[1].sub(amounts[1].div(10));
-  console.log(`
-    Buying new token
-    =================
-    tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
-    tokenOut: ${amounOutMin.toString()} ${tokenOut}
-  `);
-  const tx = await router.swapExactTokensForTokens(
-    amountIn,
-    amountOutMin,
-    [tokenIn, tokenOut],
-    addresses.recipient,
-    Date.now() + 1000 * 60 * 10 //10 minutes
-  );
-  const receipt = await tx.wait(); 
-  console.log('Transaction receipt');
-  console.log(receipt);
-  */
 });
 
