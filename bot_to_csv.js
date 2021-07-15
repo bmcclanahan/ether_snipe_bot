@@ -93,7 +93,7 @@ async function swap_tokens(tokenIn, tokenOut){
     amountOutMin,
     [tokenIn, tokenOut],
     addresses.recipient,
-    Date.now() + 1000 * 60 * 10 //10 minutes
+    Date.now() + 1000 * 60 * 2 //2 minutes
   );
   const receipt = await tx.wait(); 
   message = `
