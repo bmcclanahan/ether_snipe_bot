@@ -4,7 +4,7 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 
-let inPosition = False;
+let inPosition = false;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['CosmosInu']);
