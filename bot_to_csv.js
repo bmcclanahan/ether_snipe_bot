@@ -309,9 +309,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         message = "transaction threshold breached\n" + message;
         utils.sendNotification(phoneNumbers, message);
       }
-      if( transactionThreshFirst && (newListings[token].numTransactions >= 5) && !inPosition){
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && (newListings[token].numTransactions >= 5) && !inPosition && newListings[token].transactionPerSecondBool){
         inPosition = True;
-        message = "transaction threshold breached\nbot will now attempt to by\n" + message;
+        message = "transaction threshold breached\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
         swap_tokens(etherToken, token);
 
