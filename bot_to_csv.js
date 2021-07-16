@@ -1,8 +1,10 @@
 const axios = require('axios');
 const fs = require('fs');
 const ethers = require('ethers');
-const FuzzySet = require('fuzzyset')
-const utils = require("./utils")
+const FuzzySet = require('fuzzyset');
+const utils = require("./utils");
+
+let inPosition = False;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['CosmosInu']);
@@ -78,8 +80,8 @@ async function swap_tokens(tokenIn, tokenOut){
   const amountIn = ethers.utils.parseUnits('0.05', 'ether');
   const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
   //Our execution price will be a bit different, we need some flexbility
-  // allow 10% slippage
-  const amountOutMin = amounts[1].sub(amounts[1].div(10));
+  // allow 30% slippage
+  const amountOutMin = amounts[1].sub(amounts[1].div(30));
   let message = `
     Buying new token
     =================
@@ -241,6 +243,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     utils.sendNotification(phoneNumbers, message);
       
   pair.on('Sync', (function() {
+    let etherToken = tokenIn; //probably don't need this
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
     let tokenPosition = position;
     let tokenPair = pairAddress;
@@ -305,6 +308,13 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       if((newListings[token].anyMatch || newListings[token].contractMatch) && transactionThreshFirst && (newListings[token].numTransactions >= 5)){
         message = "transaction threshold breached\n" + message;
         utils.sendNotification(phoneNumbers, message);
+      }
+      if( transactionThreshFirst && (newListings[token].numTransactions >= 5) && !inPosition){
+        inPosition = True;
+        message = "transaction threshold breached\nbot will now attempt to by\n" + message;
+        utils.sendNotification(phoneNumbers, message);
+        swap_tokens(etherToken, token);
+
       }
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
