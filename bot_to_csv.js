@@ -274,7 +274,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         liquidityAddFirst = true
       }
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
-      newListings[token].transactionPerSecond = newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
+      newListings[token].transactionPerSecond = newListings[token].timeElapsed == -1? -1: newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
       newListings[token].transactionPerSecondBool = newListings[token].transactionPerSecond >= 0.5 // transaction rate threshold
       let transactionThreshFirst = false
       if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
