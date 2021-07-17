@@ -7,8 +7,8 @@ const utils = require("./utils");
 let inPosition = false;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
-let possibleSymbols = FuzzySet(['CosmosInu']);
-let possibleNames = FuzzySet(['Cosmos Inu']);
+let possibleSymbols = FuzzySet(['NightDoge']);
+let possibleNames = FuzzySet(['NightDoge']);
 let possibleContractStarts = ['0x87912MLJ90192']
 
 
@@ -275,7 +275,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
       newListings[token].transactionPerSecond = newListings[token].timeElapsed == -1? -1: newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
-      newListings[token].transactionPerSecondBool = newListings[token].transactionPerSecond >= 0.5 // transaction rate threshold
+      newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= 0.5) && (newListings[token].numTransactions >= 5)// transaction rate threshold trigger with transaction count requirement
       let transactionThreshFirst = false
       if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
         newListings[token].transactionThresholdBreached = true
@@ -306,12 +306,13 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         utils.sendNotification(phoneNumbers, message);
       }
       if((newListings[token].anyMatch || newListings[token].contractMatch) && transactionThreshFirst && (newListings[token].numTransactions >= 5)){
-        message = "transaction threshold breached\n" + message;
+        message = "transaction threshold hit\n" + message;
         utils.sendNotification(phoneNumbers, message);
       }
-      if((newListings[token].anyMatch || newListings[token].contractMatch) && (newListings[token].numTransactions >= 5) && !inPosition && newListings[token].transactionPerSecondBool){
+      //Buy the token
+      if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
         inPosition = True;
-        message = "transaction threshold breached\nbot will now attempt to buy\n" + message;
+        message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
         swap_tokens(etherToken, token);
 
