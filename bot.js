@@ -67,10 +67,17 @@ async function getEtherPrice(){
   });
   return Math.ceil(response.data.data.bundle.ethPrice);
 }
+const gasLimit = 250000
 
 
 async function getGasPrices(){
   response = await axios.get(gasApiURL);
+  console.log("gas prices ", response.data);
+  overrides = { 
+    gasPrice: ethers.utils.parseUnits((response.data.fastest / 10).toString(), 'gwei').toString(), 
+    gasLimit: gasLimit
+  };
+  console.log("overrides ", overrides)
   return response.data;
 }
 
@@ -92,7 +99,8 @@ async function getBalance(){
   console.log("my balance is ", ethers.utils.formatEther)
   console.log("my balance is ", ethers.utils.formatEther(balance))
 }
-getBalance();
+getGasPrices();
+console.log(ethers.utils.parseUnits('1', 'gwei').toString())
 
 
 
