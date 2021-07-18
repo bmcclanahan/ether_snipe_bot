@@ -331,7 +331,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       //Buy the token
       //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
       if(!inPosition && (newListings[token].transactionPerSecond > 0.1) && (newListings[token].numTransactions >= 5)){
-        inPosition = True;
+        inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
         swap_tokens(etherToken, token, etherPrice);
