@@ -104,7 +104,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
     Buying new token
     =================
     tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
-    tokenOut: ${amounOutMin.toString()} ${tokenOut}
+    tokenOut: ${amountOutMin.toString()} ${tokenOut}
     gas price: ${overrides.gasPrice}
     gas price USD: ${transactionCostDollar}
   `
