@@ -5,6 +5,7 @@ const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 
 const gasLimit = 250000
+const transactionCost = 201101;
 
 let inPosition = false;
 
@@ -77,18 +78,27 @@ console.log("registering pair created event")
 
 
 
-async function swap_tokens(tokenIn, tokenOut){
+async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
   //We buy for 0.1 ETH of the new token
   let gasPrice = await getGasPrices();
   let overrides = { 
     gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'), 
     gasLimit: gasLimit
   };
+  let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
+  let transactionCostDollar = transactionCostEther * etherPrice;
+  if(transactionCostDollar > maxTransPrice){
+    utils.sendNotification(
+      phoneNumbers,
+      `Max transaction cost of ${maxTransPrice} surpassed. Transaction cost ${transactionCostDollar}. Cancelling transaction`
+    );
+    return;
+  }
   const amountIn = ethers.utils.parseUnits('0.001', 'ether');
   const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
   //Our execution price will be a bit different, we need some flexbility
   // allow 30% slippage
-  const amountOutMin = amounts[1].sub(amounts[1].div(30));
+  const amountOutMin = amounts[1].sub(amounts[1].div(3));
   
   let message = `
     Buying new token
@@ -96,6 +106,7 @@ async function swap_tokens(tokenIn, tokenOut){
     tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
     tokenOut: ${amounOutMin.toString()} ${tokenOut}
     gas price: ${overrides.gasPrice}
+    gas price USD: ${transactionCostDollar}
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
@@ -204,8 +215,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
                      .replace(/T/, ' ')      // replace T with a space
                      .replace(/\..+/, '');
 
-  //estimating transaction cost
-  let transactionCost = 201101;
   let gasPrice = await getGasPrices();
   
   let etherPrice = await getEtherPrice();
@@ -325,7 +334,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         inPosition = True;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
-        swap_tokens(etherToken, token);
+        swap_tokens(etherToken, token, etherPrice);
 
       }
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
