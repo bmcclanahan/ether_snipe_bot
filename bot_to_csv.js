@@ -4,8 +4,9 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 
-const gasLimit = 250000
+const gasLimit = 250000;
 const transactionCost = 201101;
+const tradeVal = '0.05';
 
 let inPosition = false;
 
@@ -94,11 +95,11 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
     );
     return;
   }
-  const amountIn = ethers.utils.parseUnits('0.001', 'ether');
+  const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
   const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
   //Our execution price will be a bit different, we need some flexbility
   // allow 30% slippage
-  const amountOutMin = amounts[1].sub(amounts[1].div(3));
+  const amountOutMin = amounts[1].sub(amounts[1].div(2));
   
   let message = `
     Buying new token
@@ -121,6 +122,18 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
   const receipt = await tx.wait(); 
   message = `
     Transaction receipt: ${receipt}
+  `
+  console.log(message);
+  utils.sendNotification(phoneNumbers, message);
+  message = `
+    Attempting to set allowance for ${tokenOut}
+  `
+  console.log(message);
+  utils.sendNotification(phoneNumbers, message);
+  const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
+  const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, tokenBalance, addresses);
+  message = `
+    Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
@@ -330,7 +343,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
       //Buy the token
       //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-      if(!inPosition && (newListings[token].transactionPerSecond > 0.1) && (newListings[token].numTransactions >= 5)){
+      if(!inPosition && (newListings[token].transactionPerSecond > 0.5) && (newListings[token].numTransactions >= 5)){
         inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
