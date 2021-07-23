@@ -229,6 +229,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     transactionPerSecondBool: false,
     transactionThresholdBreached: false,
     inTrade: false,
+    sellTrade: false,
     tokenBalance: 0
   };
 
@@ -366,11 +367,14 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
 
       //Sell the token
-      if(newListings[token].inTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  240)){ //4 minute wait
+      if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  240)){ //4 minute wait
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
-            if(x.div(amountIn) > sellMultThresh)
+            if(x.div(amountIn) > sellMultThresh) {
               swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance);
+              newListings[token].sellTrade = true;
+            }
+              
           }
         );
 
