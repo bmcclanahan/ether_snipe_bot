@@ -366,7 +366,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
 
       //Sell the token
-      if(newListings[token].inTrade && newListings[tokenOut].tokenBalance > 0){
+      if(newListings[token].inTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  240)){ //4 minute wait
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
             if(x.div(amountIn) > sellMultThresh)
