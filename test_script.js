@@ -66,4 +66,4 @@ const router = new ethers.Contract(
   account
 );
 
-console.log(0.5, tradeVal, ethers.utils.parseUnits(tradeVal, 'ether'))
+console.log(ethers.constants.MaxUint256.div(ethers.constants.MaxUint256 + 1) < 1 )

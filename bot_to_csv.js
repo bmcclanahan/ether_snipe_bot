@@ -7,6 +7,8 @@ const utils = require("./utils");
 const gasLimit = 250000;
 const transactionCost = 201101;
 const tradeVal = '0.05';
+const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
+const sellMultThresh = 1.6
 
 let inPosition = false;
 
@@ -79,7 +81,7 @@ console.log("registering pair created event")
 
 
 
-async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
+async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, maxTransPrice = 50){
   //We buy for 0.1 ETH of the new token
   let gasPrice = await getGasPrices();
   let overrides = { 
@@ -95,16 +97,16 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
     );
     return;
   }
-  const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
-  const amounts = await router.getAmountsOut(amountIn, [tokenIn, tokenOut]);
+  
+  const amounts = await router.getAmountsOut(amount, [tokenIn, tokenOut]);
   //Our execution price will be a bit different, we need some flexbility
-  // allow 30% slippage
+  // allow 50% slippage
   const amountOutMin = amounts[1].sub(amounts[1].div(2));
   
   let message = `
     Buying new token
     =================
-    tokenIn: ${amountIn.toString()} ${tokenIn} (WETH)
+    tokenIn: ${amount.toString()} ${tokenIn} (WETH)
     tokenOut: ${amountOutMin.toString()} ${tokenOut}
     gas price: ${overrides.gasPrice}
     gas price USD: ${transactionCostDollar}
@@ -112,7 +114,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
   const tx = await router.swapExactTokensForTokens(
-    amountIn,
+    amount,
     amountOutMin,
     [tokenIn, tokenOut],
     addresses.recipient,
@@ -125,18 +127,28 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, maxTransPrice = 50){
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
+  const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
+  message =  `
+    Tokens bought: ${tokenBalance}
+  `
+  console.log(message);
+  utils.sendNotification(phoneNumbers, message);
+
   message = `
     Attempting to set allowance for ${tokenOut}
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
-  const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
-  const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, tokenBalance, addresses);
+  
+  const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses);
+
   message = `
     Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
+
+  newListings[tokenOut].tokenBalance = tokenBalance
 }
 
 
@@ -215,7 +227,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     timeElapsed: 0,
     transactionPerSecond: 0,
     transactionPerSecondBool: false,
-    transactionThresholdBreached: false
+    transactionThresholdBreached: false,
+    inTrade: false,
+    tokenBalance: 0
   };
 
   newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
@@ -347,7 +361,18 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
-        swap_tokens(etherToken, token, etherPrice);
+        swap_tokens(etherToken, token, etherPrice, amountIn);
+        newListings[token].inTrade = true;
+      }
+
+      //Sell the token
+      if(newListings[token].inTrade && newListings[tokenOut].tokenBalance > 0){
+        router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
+          x => {
+            if(x.div(amountIn) > sellMultThresh)
+              swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance);
+          }
+        );
 
       }
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
