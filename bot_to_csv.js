@@ -397,7 +397,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
               swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
               newListings[token].sellTrade = true;
               let message = `
-                Mutiple of position: ${x.div(amountIn).toString()}
+                Mutiple of position: ${x[1].div(amountIn).toString()}
               `
               console.log(message);
             }
