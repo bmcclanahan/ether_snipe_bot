@@ -117,20 +117,29 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
-  const tx = await router.swapExactTokensForTokens(
-    amount,
-    amountOutMin,
-    [tokenIn, tokenOut],
-    addresses.recipient,
-    Date.now() + 1000 * 60 * 2, //2 minutes
-    overrides
-  );
-  const receipt = await tx.wait(); 
-  message = `
-    Transaction receipt: ${receipt}
-  `
-  console.log(message);
-  utils.sendNotification(phoneNumbers, message);
+  try {
+    const tx = await router.swapExactTokensForTokens(
+      amount,
+      amountOutMin,
+      [tokenIn, tokenOut],
+      addresses.recipient,
+      Date.now() + 1000 * 60 * 2, //2 minutes
+      overrides
+    );
+    const receipt = await tx.wait(); 
+    message = `
+      Transaction receipt: ${receipt}
+    `
+    console.log(message);
+    utils.sendNotification(phoneNumbers, message);
+  } catch(err) {
+    message = "transaction failed"
+    console.log(message);
+    utils.sendNotification(phoneNumbers, message);
+    console.log(err);
+    utils.sendNotification(phoneNumbers, err);
+    return;
+  }
   const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
   message =  `
     Tokens bought: ${tokenBalance}
