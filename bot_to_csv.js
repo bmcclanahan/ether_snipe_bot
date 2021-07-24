@@ -249,7 +249,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     transactionThresholdBreached: false,
     inTrade: false,
     sellTrade: false,
-    tokenBalance: 0
+    tokenBalance: 0,
+    initRatio: 0
   };
 
   newListings[tokenOut].anyMatch = utils.checkMatchAny(newListings[tokenOut], possibleSymbols, possibleNames, possibleContractStarts);
@@ -273,7 +274,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let etherLiquidityFloat = ethers.utils.formatEther(ethLiquidity);
   let etherTokenRatio = -1
   try {
-    etherTokenRatio = etherLiquidityFloat.div(tokenLiquitityFloat).toString()
+    newListings[tokenOut].initRatio = etherLiquidityFloat.div(tokenLiquitityFloat);
+    etherTokenRatio = newListings[tokenOut].initRatio.toString();
   }
   catch(error) {
     etherTokenRatio = "-1"
@@ -334,18 +336,19 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       newListings[token].numTransactions++;
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
-      let liquidityAddFirst = false
+      let liquidityRatio = etherLiquidity / tokenLiquidity;
+      let liquidityAddFirst = false;
       if((newListings[tokenOut].liquidityDate == -1) && ((tokenLiquidity != 0) && (etherLiquidity !=0))) {
         newListings[tokenOut].liquidityDate = liquidityAddDate
         liquidityAddFirst = true
       }
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
       newListings[token].transactionPerSecond = newListings[token].timeElapsed == -1? -1: newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
-      newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh)// transaction rate threshold trigger with transaction count requirement
-      let transactionThreshFirst = false
+      newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio);// transaction rate threshold trigger with transaction count requirement
+      let transactionThreshFirst = false;
       if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
-        newListings[token].transactionThresholdBreached = true
-        transactionThreshFirst = true
+        newListings[token].transactionThresholdBreached = true;
+        transactionThreshFirst = true;
       }
         
       let message = `
@@ -356,7 +359,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         tokan symbol: ${tokenSymbolInner}
         token liquidity: ${tokenLiquidity}
         ether liquidity: ${etherLiquidity}
-        ether/token ratio: ${etherLiquidity / tokenLiquidity}
+        ether/token ratio: ${liquidityRatio}
+        ether/token init ratio: ${newListings[token].initRatio.toString()}
         pairAddress: ${tokenPair}
         time: ${date}
         time from pair creation: ${timeElapsed}
@@ -377,7 +381,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
       //Buy the token
       //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-      if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh)){
+      if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
         inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
