@@ -4,7 +4,7 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 
-const gasLimit = 250000;
+const gasLimit = 500000;
 const transactionCost = 201101;
 const tradeVal = '0.05';
 
@@ -38,6 +38,7 @@ async function getEtherPrice(){
 
 async function getGasPrices(){
   response = await axios.get(gasApiURL);
+  console.log(response.data)
   return response.data;
 }
 
@@ -66,4 +67,5 @@ const router = new ethers.Contract(
   account
 );
 
-console.log(ethers.constants.MaxUint256.div(ethers.constants.MaxUint256 + 1) < 1 )
+getGasPrices()
+//console.log(getGasPrices)

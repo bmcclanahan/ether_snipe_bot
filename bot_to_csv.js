@@ -4,7 +4,7 @@ const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 
-const gasLimit = 250000;
+const gasLimit = 500000;
 const transactionCost = 201101;
 const tradeVal = '0.005';
 const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
