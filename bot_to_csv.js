@@ -378,7 +378,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  220)){ //3 minutes 40 seconds
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
-            if(x.div(amountIn) > sellMultThresh) {
+            if(x[1].div(amountIn) > sellMultThresh) {
               swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance);
               newListings[token].sellTrade = true;
               let message = `
