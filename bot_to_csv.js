@@ -274,11 +274,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   let etherLiquidityFloat = ethers.utils.formatEther(ethLiquidity);
   let etherTokenRatio = -1
   try {
-    newListings[tokenOut].initRatio = etherLiquidityFloat.div(tokenLiquitityFloat);
-    etherTokenRatio = newListings[tokenOut].initRatio.toString();
+    newListings[tokenOut].initRatio = ethLiquidity / tokLiquidity;
+    etherTokenRatio = newListings[tokenOut].initRatio;
   }
   catch(error) {
-    etherTokenRatio = "-1"
+    etherTokenRatio = 0
   }  
   let message = `
     Initial Liquidity for token
