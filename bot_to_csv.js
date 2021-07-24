@@ -85,7 +85,7 @@ fs.writeSync(transactionStream, "token_in, token_out, time, amount\n");
 
 
 
-async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, maxTransPrice = 50){
+async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance = true, maxTransPrice = 50){
   //We buy for 0.1 ETH of the new token
   let gasPrice = await getGasPrices();
   let overrides = { 
@@ -137,20 +137,21 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, maxTransPrice 
   `
   console.log(message);
   utils.sendNotification(phoneNumbers, message);
+  if(setAllowance){
+    message = `
+      Attempting to set allowance for ${tokenOut}
+    `
+    console.log(message);
+    utils.sendNotification(phoneNumbers, message);
+    
+    const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses);
 
-  message = `
-    Attempting to set allowance for ${tokenOut}
-  `
-  console.log(message);
-  utils.sendNotification(phoneNumbers, message);
-  
-  const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses);
-
-  message = `
-    Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
-  `
-  console.log(message);
-  utils.sendNotification(phoneNumbers, message);
+    message = `
+      Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
+    `
+    console.log(message);
+    utils.sendNotification(phoneNumbers, message);
+  }
 
   newListings[tokenOut].tokenBalance = tokenBalance
   let date = liquidityAddDate.toISOString()
@@ -379,7 +380,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
             if(x[1].div(amountIn) > sellMultThresh) {
-              swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance);
+              swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false);
               newListings[token].sellTrade = true;
               let message = `
                 Mutiple of position: ${x.div(amountIn).toString()}
