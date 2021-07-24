@@ -11,6 +11,7 @@ const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
 const sellMultThresh = 0.3;
 const transactionsPerSecondThresh = 0.1;
 const numTransactionsThresh = 5;
+const maxTransPriceThresh = 20;
 
 let inPosition = false;
 
@@ -380,7 +381,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
-        swap_tokens(etherToken, token, etherPrice, amountIn);
+        swap_tokens(etherToken, token, etherPrice, amountIn, true, maxTransPriceThresh);
         newListings[token].inTrade = true;
       }
 
@@ -389,7 +390,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
             if(x[1].div(amountIn) > sellMultThresh) {
-              swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false);
+              swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
               newListings[token].sellTrade = true;
               let message = `
                 Mutiple of position: ${x.div(amountIn).toString()}
