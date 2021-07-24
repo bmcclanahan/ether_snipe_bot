@@ -156,7 +156,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, maxTransPrice 
   let date = liquidityAddDate.toISOString()
                                  .replace(/T/, ' ')      // replace T with a space
                                  .replace(/\..+/, '');
-  fs.writeSync(transactionStream, `${tokenIn}, ${tokenOut}, ${date}, ${tokenBalance.toString()}\n`);
+  fs.writeSync(transactionStream, `${tokenIn}, ${tokenOut}, ${date}, ${tokenBalance}\n`);
 }
 
 
