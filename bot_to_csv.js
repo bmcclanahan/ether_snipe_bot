@@ -6,23 +6,25 @@ const utils = require("./utils");
 
 const gasLimit = 250000;
 const transactionCost = 201101;
-const tradeVal = '0.05';
+const tradeVal = '0.005';
 const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
-const sellMultThresh = 1.6
+const sellMultThresh = 0.3;
+const transactionsPerSecondThresh = 0.1;
+const numTransactionsThresh = 5;
 
 let inPosition = false;
 
-let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
+let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers2.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
-let possibleContractStarts = ['0x87912MLJ90192']
+let possibleContractStarts = ['0x87912MLJ90192'];
 
 
 
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
 let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
 let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
-const csv_folder = '/Users/brianmcclanahan/ether_new_transactions'
+const csv_folder = '/Users/brianmcclanahan/ether_new_transactions';
 
 async function getEtherPrice(){
   response = await axios.post(uniswapApi, {
@@ -77,7 +79,9 @@ var new_pair_stream = fs.openSync(`${csv_folder}/new_pairs_${filetimestamp}.csv`
 fs.writeSync(new_pair_stream, "token, token_name, token_symbol, token_liquidity, ether_liquidity, ether_token_ratio, pair_address, time, transaction_cost_ether, transaction_cost_dollar, any_match, contract_match, ether_usd\n");
 var liquidity_update_stream = fs.openSync(`${csv_folder}/liquidity_updates_${filetimestamp}.csv`, 'w');
 fs.writeSync(liquidity_update_stream, "pair, token, token_name, token_symbol, token_liquidity, ether_liquitity, ether_token_ratio, time, time_from_creation, num_transactions, time_elapsed, transaction_per_second, transaction_per_second_bool, ether_usd\n");
-console.log("registering pair created event")
+console.log("registering pair created event");
+var transactionStream = fs.openSync(`${csv_folder}/transactions_${filetimestamp}.csv`, 'w');
+fs.writeSync(transactionStream, "token_in, token_out, time, amount\n");
 
 
 
@@ -149,6 +153,10 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, maxTransPrice 
   utils.sendNotification(phoneNumbers, message);
 
   newListings[tokenOut].tokenBalance = tokenBalance
+  let date = liquidityAddDate.toISOString()
+                                 .replace(/T/, ' ')      // replace T with a space
+                                 .replace(/\..+/, '');
+  fs.writeSync(transactionStream, `${tokenIn}, ${tokenOut}, ${date}, ${tokenBalance.toString()}\n`);
 }
 
 
@@ -322,7 +330,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
       newListings[token].timeElapsed = newListings[tokenOut].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
       newListings[token].transactionPerSecond = newListings[token].timeElapsed == -1? -1: newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
-      newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= 0.5) && (newListings[token].numTransactions >= 5)// transaction rate threshold trigger with transaction count requirement
+      newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh)// transaction rate threshold trigger with transaction count requirement
       let transactionThreshFirst = false
       if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
         newListings[token].transactionThresholdBreached = true
@@ -358,7 +366,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
       //Buy the token
       //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-      if(!inPosition && (newListings[token].transactionPerSecond > 0.5) && (newListings[token].numTransactions >= 5)){
+      if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh)){
         inPosition = true;
         message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
         utils.sendNotification(phoneNumbers, message);
@@ -367,12 +375,16 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
 
       //Sell the token
-      if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  240)){ //4 minute wait
+      if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  220)){ //3 minutes 40 seconds
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
             if(x.div(amountIn) > sellMultThresh) {
               swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance);
               newListings[token].sellTrade = true;
+              let message = `
+                Mutiple of position: ${x.div(amountIn).toString()}
+              `
+              console.log(message);
             }
               
           }
