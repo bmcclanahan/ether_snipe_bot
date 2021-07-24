@@ -393,11 +393,12 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[tokenOut].tokenBalance > 0) && (newListings[tokenOut].timeElapsed >=  220)){ //3 minutes 40 seconds
         router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
           x => {
-            if(x[1].div(amountIn) > sellMultThresh) {
+            let profitRatio = x[1].div(amountIn);
+            if(profitRatio > sellMultThresh) {
               swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
               newListings[token].sellTrade = true;
               let message = `
-                Mutiple of position: ${x[1].div(amountIn).toString()}
+                Mutiple of position: ${profitRatio.toString()}
               `
               console.log(message);
             }
