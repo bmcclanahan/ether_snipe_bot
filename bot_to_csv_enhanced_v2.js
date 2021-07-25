@@ -207,25 +207,25 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   let message = `
   Liquitidy modified for token
   =================
-    token: ${token}
-    token name: ${newListings[token].name}
-    tokan symbol: ${newListings[token].symbol}
-    token liquidity: ${tokenLiquidity}
-    ether liquidity: ${etherLiquidity}
-    ether/token ratio: ${liquidityRatio}
-    ether/token init ratio: ${newListings[token].initRatio.toString()}
-    pairAddress: ${newListings[token].pairAddress}
-    time: ${date}
-    time from pair creation: ${timeElapsed}
-    num transactions: ${newListings[token].numTransactions}
-    timeElapsed: ${newListings[token].timeElapsed},
-    transactionPerSecond: ${newListings[token].transactionPerSecond},
-    transactionPerSecondBool: ${newListings[token].transactionPerSecondBool},
-    etherPriceInner: ${etherPrice}
-    buys: ${newListings[token].buys}
-    sells: ${newListings[token].sells}
-    mints: ${newListings[token].mints}
-    burns: ${newListings[token].burns}
+  token: ${token}
+  token name: ${newListings[token].name}
+  tokan symbol: ${newListings[token].symbol}
+  token liquidity: ${tokenLiquidity}
+  ether liquidity: ${etherLiquidity}
+  ether/token ratio: ${liquidityRatio}
+  ether/token init ratio: ${newListings[token].initRatio.toString()}
+  pairAddress: ${newListings[token].pairAddress}
+  time: ${date}
+  time from pair creation: ${timeElapsed}
+  num transactions: ${newListings[token].numTransactions}
+  timeElapsed: ${newListings[token].timeElapsed},
+  transactionPerSecond: ${newListings[token].transactionPerSecond},
+  transactionPerSecondBool: ${newListings[token].transactionPerSecondBool},
+  etherPriceInner: ${etherPrice}
+  buys: ${newListings[token].buys}
+  sells: ${newListings[token].sells}
+  mints: ${newListings[token].mints}
+  burns: ${newListings[token].burns}
   `
   console.log(message);
   if((newListings[token].anyMatch || newListings[token].contractMatch) && liquidityAddFirst){
@@ -264,7 +264,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     );
 
   }
-  fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}, ${newListings[token].buys}, ${newListings[token].sells}, ${newListings[token].mints}, ${newListings[token].burns}, ${updateType}\n`)
+  fs.writeSync(liquidity_update_stream, `${newListings[token].pairAddress}, ${token}, ${newListings[token].name}, ${newListings[token].symbol}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}, ${newListings[token].buys}, ${newListings[token].sells}, ${newListings[token].mints}, ${newListings[token].burns}, ${updateType}\n`)
 }
 
 
