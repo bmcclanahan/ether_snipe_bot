@@ -353,8 +353,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     initRatio: 0,
     buys: 0,
     sells: 0,
-    reserve0: 0,
-    reserve1: 1,
+    reserve0: tokReserve0,
+    reserve1: tokReserve1,
     mints: 0,
     burns: 0,
     creationDate: creationDate
