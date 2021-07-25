@@ -67,5 +67,22 @@ const router = new ethers.Contract(
   account
 );
 
-getGasPrices()
+//getGasPrices()
 //console.log(getGasPrices)
+
+async function test(){
+    let pair = new ethers.Contract(
+        '0x6399846eC4d73723142003CC9e7c2622815C97b2',
+        [
+          'event Sync(uint112 reserve0, uint112 reserve0)',
+          'function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast)'
+        ],
+        account
+      )
+      result =  await pair.getReserves()
+      console.log(result[0].toString(), result[1].toString())
+      console.log(result[1].div(result[0]).toString())
+      console.log(ethers.utils.parseUnits('0.005', 'ether').toString());
+}
+
+test()

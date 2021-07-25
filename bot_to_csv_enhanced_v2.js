@@ -250,7 +250,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  220)){ //3 minutes 40 seconds
     router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
       x => {
-        let profitRatio = x[1].div(amountIn);
+        let profitRatio = x[1] / amountIn;
         if(profitRatio > sellMultThresh) {
           swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
           newListings[token].sellTrade = true;
@@ -264,7 +264,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     );
 
   }
-  fs.writeSync(liquidity_update_stream, `${newListings[token].pairAddress}, ${token}, ${newListings[token].name}, ${newListings[token].symbol}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}, ${newListings[token].buys}, ${newListings[token].sells}, ${newListings[token].mints}, ${newListings[token].burns}, ${updateType}\n`)
+  fs.writeSync(liquidity_update_stream, `${newListings[token].pairAddress}, ${token}, ${newListings[token].name}, ${newListings[token].symbol}, ${tokenLiquidity}, ${etherLiquidity}, ${liquidityRatio}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}, ${newListings[token].buys}, ${newListings[token].sells}, ${newListings[token].mints}, ${newListings[token].burns}, ${updateType}\n`)
 }
 
 
@@ -353,8 +353,8 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     initRatio: 0,
     buys: 0,
     sells: 0,
-    reserve0: tokReserve0,
-    reserve1: tokReserve1,
+    reserve0: ethers.BigNumber.from(tokReserve0),
+    reserve1: ethers.BigNumber.from(tokReserve1),
     mints: 0,
     burns: 0,
     creationDate: creationDate
@@ -446,20 +446,23 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
             updateType = 'sell';
           }
         }
+        let divisor = 10 ** 18
         let message = `
           Swap for token
           =================
           token: ${token}
+          token name: ${newListings[token].name}
+          token symbol: ${newListings[token].symbol}
           tokenPosition: ${tokenPosition}
           pairAddress: ${tokenPair}
-          amount0In: ${amount0In}
-          amount1In: ${amount1In}
-          amount0Out: ${amount0Out}
-          amount1Out: ${amount1Out}
+          amount0In: ${amount0In / divisor}
+          amount1In: ${amount1In / divisor}
+          amount0Out: ${amount0Out / divisor}
+          amount1Out: ${amount1Out / divisor}
         `;
         console.log(message);
-        newListings[token].reserve0 =  newListings[token].reserve0 + amount0In - amount0Out;
-        newListings[token].reserve1 =  newListings[token].reserve1 + amount1In - amount1Out;
+        newListings[token].reserve0 =  newListings[token].reserve0.add(amount0In).sub(amount0Out);
+        newListings[token].reserve1 =  newListings[token].reserve1.add(amount1In).sub(amount1Out);
         liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateType);
       }
     })()
@@ -471,18 +474,21 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       let token = tokenOut;
       let tokenPair = pairAddress;
       return function(sender, amount0, amount1){
+        let divisor = 10 ** 18
         let message = `
           Mint for token
           =================
           token: ${token}
+          token name: ${newListings[token].name}
+          token symbol: ${newListings[token].symbol}
           tokenPosition: ${tokenPosition}
           pairAddress: ${tokenPair}
-          amount0: ${amount0}
-          amount1: ${amount1}
+          amount0: ${amount0 / divisor}
+          amount1: ${amount1 / divisor}
         `;
         console.log(message);
-        newListings[token].reserve0 =  newListings[token].reserve0 + amount0;
-        newListings[token].reserve1 =  newListings[token].reserve1 + amount1;
+        newListings[token].reserve0 =  newListings[token].reserve0.add(amount0);
+        newListings[token].reserve1 =  newListings[token].reserve1.add(amount1);
         newListings[token].mints += 1;
         liquidityUpdate(newListings, token, tokenPosition, etherPrice, 'mint');
       }
@@ -494,19 +500,23 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       let tokenPosition = position;
       let token = tokenOut;
       let tokenPair = pairAddress;
+      
       return function(sender, amount0, amount1, to){
+        let divisor = 10 ** 18
         let message = `
-          Mint for token
+          Burn for token
           =================
           token: ${token}
+          token name: ${newListings[token].name}
+          token symbol: ${newListings[token].symbol}
           tokenPosition: ${tokenPosition}
           pairAddress: ${tokenPair}
-          amount0: ${amount0}
-          amount1: ${amount1}
+          amount0: ${amount0 / divisor}
+          amount1: ${amount1 / divisor}
         `;
         console.log(message);
-        newListings[token].reserve0 =  newListings[token].reserve0 - amount0;
-        newListings[token].reserve1 =  newListings[token].reserve1 - amount1;
+        newListings[token].reserve0 =  newListings[token].reserve0.sub(amount0);
+        newListings[token].reserve1 =  newListings[token].reserve1.sub(amount1);
         newListings[token].burns += 1;
         liquidityUpdate(newListings, token, tokenPosition, etherPrice, 'burn');
       }
@@ -518,8 +528,6 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
     let tokenPosition = position;
     let tokenPair = pairAddress;
-    let tokenNameInner = tokenName;
-    let tokenSymbolInner = tokenSymbol;
     return function(reserve0, reserve1) {
       if(tokenPosition == 0){
         ethLiquidity = reserve1;
@@ -542,9 +550,9 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       Sync for token
       =================
         token: ${token}
-        token name: ${tokenNameInner}
+        token name: ${newListings[token].name}
+        token symbol: ${newListings[token].symbol}
         pairAddress: ${tokenPair}
-        tokan symbol: ${tokenSymbolInner}
         token liquidity: ${tokLiquidity}
         ether liquidity: ${etherLiquidity}
         token liquidity formatted: ${tokenLiquidity}
