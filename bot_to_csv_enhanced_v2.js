@@ -545,8 +545,10 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         token name: ${tokenNameInner}
         pairAddress: ${tokenPair}
         tokan symbol: ${tokenSymbolInner}
-        token liquidity: ${tokenLiquidity}
+        token liquidity: ${tokLiquidity}
         ether liquidity: ${etherLiquidity}
+        token liquidity formatted: ${tokenLiquidity}
+        ether liquidity formatted: ${etherLiquidity}
         ether/token ratio: ${liquidityRatio}
         time: ${date}
       `
