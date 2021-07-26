@@ -56,14 +56,14 @@ async function set_allowance_ether(account, token, amount, addresses){
     return amountApproved;
   }
 
-async function set_allowance_token(account, token, amount, addresses){
+async function set_allowance_token(account, token, amount, addresses, overrides = {}){
     const tokenContract = new ethers.Contract(
       token,
       ['function approve(address _spender, uint256 _value) public returns (bool success)',
        'function allowance(address owner, address spender) external view returns (uint)'],
       account
     );
-    const tx = await tokenContract.approve(addresses.router, amount);
+    const tx = await tokenContract.approve(addresses.router, amount, overrides);
     const receipt = await tx.wait();
     console.log(`approval receipt ${receipt}`)
     const amountApproved = await tokenContract.allowance(addresses.recipient, addresses.router);

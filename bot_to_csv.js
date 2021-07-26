@@ -379,7 +379,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
         message = "transaction threshold hit\n" + message;
         utils.sendNotification(phoneNumbers, message);
       }
-      //Buy the token
+      /*/Buy the token
       //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
       if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
         inPosition = true;
@@ -406,7 +406,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
           }
         );
 
-      }
+      }*/
       fs.writeSync(liquidity_update_stream, `${tokenPair}, ${token}, ${tokenNameInner}, ${tokenSymbolInner}, ${tokenLiquidity}, ${etherLiquidity}, ${etherLiquidity / tokenLiquidity}, ${date}, ${timeElapsed}, ${newListings[token].numTransactions}, ${newListings[token].timeElapsed}, ${newListings[token].transactionPerSecond}, ${newListings[token].transactionPerSecondBool}, ${etherPrice}\n`)
     }
   })());

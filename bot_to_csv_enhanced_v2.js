@@ -6,16 +6,16 @@ const utils = require("./utils");
 
 const gasLimit = 500000;
 const transactionCost = 201101;
-const tradeVal = '0.005';
+const tradeVal = '0.011';
 const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
 const sellMultThresh = 0.3;
 const transactionsPerSecondThresh = 0.1;
 const numTransactionsThresh = 5;
-const maxTransPriceThresh = 20;
+const maxTransPriceThresh = 40;
 
 let inPosition = false;
 
-let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers2.txt', 'utf8').split("\n").filter(x => x.length !=0);
+let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
 let possibleContractStarts = ['0x87912MLJ90192'];
@@ -154,7 +154,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
     console.log(message);
     utils.sendNotification(phoneNumbers, message);
     
-    const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses);
+    const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses, overrides);
 
     message = `
       Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
@@ -242,17 +242,17 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     inPosition = true;
     message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
     utils.sendNotification(phoneNumbers, message);
-    swap_tokens(etherToken, token, etherPrice, amountIn, true, maxTransPriceThresh);
+    swap_tokens(addresses.WETH, token, etherPrice, amountIn, true, maxTransPriceThresh);
     newListings[token].inTrade = true;
   }
 
   //Sell the token
   if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  220)){ //3 minutes 40 seconds
-    router.getAmountsOut(newListings[token].tokenBalance, [token, etherToken]).then(
+    router.getAmountsOut(newListings[token].tokenBalance, [token, addresses.WETH]).then(
       x => {
         let profitRatio = x[1] / amountIn;
         if(profitRatio > sellMultThresh) {
-          swap_tokens(token, etherToken, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
+          swap_tokens(token, addresses.WETH, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
           newListings[token].sellTrade = true;
           let message = `
             Mutiple of position: ${profitRatio.toString()}
