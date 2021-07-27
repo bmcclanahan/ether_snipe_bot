@@ -49,7 +49,11 @@ const addresses = {
   recipient: '0x76e7180a22a771267d3bb1d2125a036ddd8344d9'
 }
 
-const provider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
+const infuraProvider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
+const alchemyProvider = new ethers.providers.WebSocketProvider('wss://eth-mainnet.alchemyapi.io/v2/U9D94i9IfuNroyIdgnYJIkroXz4U9yb4');
+const fallbackProvider = new ethers.providers.FallbackProvider([alchemyProvider, infuraProvider], 1);
+
+/*
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
 const account = wallet.connect(provider);
@@ -85,4 +89,4 @@ async function test(){
       console.log(ethers.utils.parseUnits('0.005', 'ether').toString());
 }
 
-test()
+test()*/
