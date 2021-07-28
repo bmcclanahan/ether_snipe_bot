@@ -53,7 +53,14 @@ const infuraProvider = new ethers.providers.WebSocketProvider('wss://mainnet.inf
 const alchemyProvider = new ethers.providers.WebSocketProvider('wss://eth-mainnet.alchemyapi.io/v2/U9D94i9IfuNroyIdgnYJIkroXz4U9yb4');
 const fallbackProvider = new ethers.providers.FallbackProvider([alchemyProvider, infuraProvider], 1);
 
-/*
+
+var testObj = {
+    test: true
+}
+if(!testObj['asdf'])
+    console.log('true')
+console.log("after")
+/*s
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
 const account = wallet.connect(provider);
