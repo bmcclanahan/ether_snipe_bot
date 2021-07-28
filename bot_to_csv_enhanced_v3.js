@@ -6,7 +6,7 @@ const utils = require("./utils");
 
 const gasLimit = 500000;
 const transactionCost = 201101;
-const tradeVal = '0.011';
+const tradeVal = '0.02';
 const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
 const sellMultThresh = 0.3;
 const transactionsPerSecondThresh = 0.1;
@@ -55,10 +55,10 @@ const addresses = {
 
 const infuraProvider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
 const alchemyProvider = new ethers.providers.WebSocketProvider('wss://eth-mainnet.alchemyapi.io/v2/U9D94i9IfuNroyIdgnYJIkroXz4U9yb4');
-const provider = new ethers.providers.FallbackProvider([alchemyProvider, infuraProvider], 1);
+const provider = new ethers.providers.FallbackProvider([infuraProvider, alchemyProvider], 1);
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
-const account = wallet.connect(provider);
+const account = wallet.connect(alchemyProvider);
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
@@ -89,87 +89,92 @@ fs.writeSync(transactionStream, "token_in, token_out, time, amount\n");
 
 
 async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance = true, maxTransPrice = 50){
-  //We buy for 0.1 ETH of the new token
-  let gasPrice = await getGasPrices();
-  let overrides = { 
-    gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'), 
-    gasLimit: gasLimit
-  };
-  let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
-  let transactionCostDollar = transactionCostEther * etherPrice;
-  if(transactionCostDollar > maxTransPrice){
-    utils.sendNotification(
-      phoneNumbers,
-      `Max transaction cost of ${maxTransPrice} surpassed. Transaction cost ${transactionCostDollar}. Cancelling transaction`
-    );
-    return;
-  }
-  
-  const amounts = await router.getAmountsOut(amount, [tokenIn, tokenOut]);
-  //Our execution price will be a bit different, we need some flexbility
-  // allow 50% slippage
-  const amountOutMin = amounts[1].sub(amounts[1].div(2));
-  
-  let message = `
-    Buying new token
-    =================
-    tokenIn: ${amount.toString()} ${tokenIn} (WETH)
-    tokenOut: ${amountOutMin.toString()} ${tokenOut}
-    gas price: ${overrides.gasPrice}
-    gas price USD: ${transactionCostDollar}
-  `
-  console.log(message);
-  utils.sendNotification(phoneNumbers, message);
-  try {
-    const tx = await router.swapExactTokensForTokens(
-      amount,
-      amountOutMin,
-      [tokenIn, tokenOut],
-      addresses.recipient,
-      Date.now() + 1000 * 60 * 2, //2 minutes
-      overrides
-    );
-    const receipt = await tx.wait(); 
-    message = `
-      Transaction receipt: ${receipt}
-    `
-    console.log(message);
-    utils.sendNotification(phoneNumbers, message);
-  } catch(err) {
-    message = "transaction failed"
-    console.log(message);
-    utils.sendNotification(phoneNumbers, message);
-    console.log(err);
-    utils.sendNotification(phoneNumbers, err);
-    return;
-  }
-  const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
-  message =  `
-    Tokens bought: ${tokenBalance}
-  `
-  console.log(message);
-  utils.sendNotification(phoneNumbers, message);
-  if(setAllowance){
-    message = `
-      Attempting to set allowance for ${tokenOut}
-    `
-    console.log(message);
-    utils.sendNotification(phoneNumbers, message);
+  if(!newListings[token].sellAttepmt){
+    if(newListings[token].sellTrade)
+      newListings[token].sellAttepmt = true;
+    //We buy for 0.1 ETH of the new token
+    let gasPrice = await getGasPrices();
+    let overrides = { 
+      gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'), 
+      gasLimit: gasLimit
+    };
+    let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
+    let transactionCostDollar = transactionCostEther * etherPrice;
+    if(transactionCostDollar > maxTransPrice){
+      utils.sendNotification(
+        phoneNumbers,
+        `Max transaction cost of ${maxTransPrice} surpassed. Transaction cost ${transactionCostDollar}. Cancelling transaction`
+      );
+      return;
+    }
     
-    const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses, overrides);
-
-    message = `
-      Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
+    const amounts = await router.getAmountsOut(amount, [tokenIn, tokenOut]);
+    //Our execution price will be a bit different, we need some flexbility
+    // allow 50% slippage
+    const amountOutMin = amounts[1].sub(amounts[1].div(2));
+    
+    let message = `
+      Buying new token
+      =================
+      tokenIn: ${amount.toString()} ${tokenIn} (WETH)
+      tokenOut: ${amountOutMin.toString()} ${tokenOut}
+      gas price: ${overrides.gasPrice}
+      gas price USD: ${transactionCostDollar}
     `
     console.log(message);
     utils.sendNotification(phoneNumbers, message);
-  }
+    try {
+      const tx = await router.swapExactTokensForTokens(
+        amount,
+        amountOutMin,
+        [tokenIn, tokenOut],
+        addresses.recipient,
+        Date.now() + 1000 * 60 * 2, //2 minutes
+        overrides
+      );
+      const receipt = await tx.wait(); 
+      message = `
+        Transaction receipt: ${receipt}
+      `
+      console.log(message);
+      utils.sendNotification(phoneNumbers, message);
+    } catch(err) {
+      message = "transaction failed"
+      console.log(message);
+      utils.sendNotification(phoneNumbers, message);
+      console.log(err);
+      utils.sendNotification(phoneNumbers, err);
+      return;
+    }
+    const tokenBalance = await utils.get_balance(account, tokenOut, addresses);
+    message =  `
+      Tokens bought: ${tokenBalance}
+    `
+    console.log(message);
+    utils.sendNotification(phoneNumbers, message);
+    if(setAllowance){
+      message = `
+        Attempting to set allowance for ${tokenOut}
+      `
+      console.log(message);
+      utils.sendNotification(phoneNumbers, message);
+      
+      const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses, overrides);
 
-  newListings[tokenOut].tokenBalance = tokenBalance
-  let date = liquidityAddDate.toISOString()
-                                 .replace(/T/, ' ')      // replace T with a space
-                                 .replace(/\..+/, '');
-  fs.writeSync(transactionStream, `${tokenIn}, ${tokenOut}, ${date}, ${tokenBalance}\n`);
+      message = `
+        Allowance of ${approvedTokenBalance.toString()} approved for ${tokenOut}
+      `
+      console.log(message);
+      utils.sendNotification(phoneNumbers, message);
+    }
+
+    newListings[tokenOut].tokenBalance = tokenBalance
+    let transactionDate = new Date(Date.now() + offset*60*1000);
+    let date = transactionDate.toISOString()
+                              .replace(/T/, ' ')      // replace T with a space
+                              .replace(/\..+/, '');
+    fs.writeSync(transactionStream, `${tokenIn}, ${tokenOut}, ${date}, ${tokenBalance}\n`);
+  }
 }
 
 
@@ -254,8 +259,8 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
       x => {
         let profitRatio = x[1] / amountIn;
         if(profitRatio > sellMultThresh) {
-          swap_tokens(token, addresses.WETH, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
           newListings[token].sellTrade = true;
+          swap_tokens(token, addresses.WETH, etherPrice, newListings[token].tokenBalance, false, maxTransPriceThresh);
           let message = `
             Mutiple of position: ${profitRatio.toString()}
           `
@@ -351,6 +356,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     transactionThresholdBreached: false,
     inTrade: false,
     sellTrade: false,
+    sellAttepmt: false,
     tokenBalance: 0,
     initRatio: 0,
     buys: 0,
