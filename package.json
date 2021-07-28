@@ -19,6 +19,8 @@
     "graphql": "^15.5.1"
   },
   "devDependencies": {
+    "@uniswap/sdk-core": "^3.0.0",
+    "@uniswap/v3-sdk": "^3.3.1",
     "bufferutil": "^4.0.3",
     "jest": "^27.0.6"
   }
