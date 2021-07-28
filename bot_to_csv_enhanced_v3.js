@@ -91,7 +91,7 @@ fs.writeSync(transactionStream, "token_in, token_out, time, amount\n");
 async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance = true, maxTransPrice = 50){
 
   if(!newListings[tokenIn]['sellAttepmt']){
-    if(newListings[tokenIn].sellTrade)
+    if(newListings[tokenIn]['sellTrade'])
       newListings[tokenIn].sellAttepmt = true;
     //We buy for 0.1 ETH of the new token
     let gasPrice = await getGasPrices();
