@@ -92,7 +92,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
 
   if(!newListings[tokenIn]['sellAttepmt']){
     if(newListings[tokenIn]['sellTrade'])
-      newListings[tokenIn].sellAttepmt = true;
+      newListings[tokenIn]['sellAttepmt'] = true;
     //We buy for 0.1 ETH of the new token
     let gasPrice = await getGasPrices();
     let overrides = { 
