@@ -72,8 +72,13 @@ const router = new ethers.Contract(
   ],
   account
 );
-
-var newListings = {};
+addresses.WETH
+var newListings = {
+  '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': { //see if you can use addresses here
+    sellAttepmt: false,
+    sellTrade: false
+  } //to get swap function to work
+};
 
 //open pair created csv file
 var offset = -240;
