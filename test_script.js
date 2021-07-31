@@ -63,7 +63,7 @@ if(!testObj['asdf'])
 console.log("after")
 
 beep(20)
-
+console.log('non blocking')
 
 
 /*s
