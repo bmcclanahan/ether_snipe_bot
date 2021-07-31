@@ -3,6 +3,7 @@ const fs = require('fs');
 const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
+const beep = require('beepbeep');
 
 const gasLimit = 500000;
 const transactionCost = 201101;
@@ -60,6 +61,11 @@ var testObj = {
 if(!testObj['asdf'])
     console.log('true')
 console.log("after")
+
+beep(20)
+
+
+
 /*s
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));

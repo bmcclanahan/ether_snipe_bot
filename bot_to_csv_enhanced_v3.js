@@ -3,6 +3,7 @@ const fs = require('fs');
 const ethers = require('ethers');
 const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
+const beep = require('beepbeep');
 
 const gasLimit = 500000;
 const transactionCost = 201101;
@@ -12,6 +13,7 @@ const sellMultThresh = 0.3;
 const transactionsPerSecondThresh = 0.1;
 const numTransactionsThresh = 5;
 const maxTransPriceThresh = 40;
+const alertBeepNum = 20;
 
 let inPosition = false;
 
@@ -98,6 +100,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
   if(!newListings[tokenIn]['sellAttepmt']){
     if(newListings[tokenIn]['sellTrade'])
       newListings[tokenIn]['sellAttepmt'] = true;
+    beep(alertBeepNum);
     //We buy for 0.1 ETH of the new token
     let gasPrice = await getGasPrices();
     let overrides = { 
