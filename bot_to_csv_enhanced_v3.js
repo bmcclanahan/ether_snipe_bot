@@ -256,12 +256,14 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
   //Buy the token
   //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-  if(live_trade && !inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
-    inPosition = true;
+  if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
     message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
     utils.sendNotification(phoneNumbers, message);
-    swap_tokens(addresses.WETH, token, etherPrice, amountIn, true, maxTransPriceThresh);
-    newListings[token].inTrade = true;
+    inPosition = true;
+    if(live_trade) {
+      swap_tokens(addresses.WETH, token, etherPrice, amountIn, true, maxTransPriceThresh);
+      newListings[token].inTrade = true;
+    }
   }
 
   //Sell the token
