@@ -14,6 +14,7 @@ const transactionsPerSecondThresh = 0.5; //number of transactions that need to h
 const numTransactionsThresh = 5; //number of transaction that need to occur before buy
 const maxTransPriceThresh = 40; //maximum amount you want to pay for a transaction
 const alertBeepNum = 20;
+const maxTimeElapsed = 120;
 
 let inPosition = false;
 
@@ -215,7 +216,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
   newListings[token].timeElapsed = newListings[token].liquidityDate == -1? -1: (liquidityAddDate - newListings[token].listingDate) / 1000;
   newListings[token].transactionPerSecond = newListings[token].timeElapsed == -1? -1: newListings[token].numTransactions / (newListings[token].timeElapsed + 1);
-  newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio);// transaction rate threshold trigger with transaction count requirement
+  newListings[token].transactionPerSecondBool = (newListings[token].transactionPerSecond >= transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio) && (newListings[token].timeElapsed < maxTimeElapsed);// transaction rate threshold trigger with transaction count requirement
   let transactionThreshFirst = false;
   if(!newListings[token].transactionThresholdBreached && newListings[token].transactionPerSecondBool){
     newListings[token].transactionThresholdBreached = true;
@@ -255,8 +256,9 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     utils.sendNotification(phoneNumbers, message);
   }
   //Buy the token
-  //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-  if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
+  //if((newListings[token].anyMatch | | newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
+  if(!inPosition && newListings[token].transactionPerSecondBool){
+  //if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
     message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
     utils.sendNotification(phoneNumbers, message);
     inPosition = true;
