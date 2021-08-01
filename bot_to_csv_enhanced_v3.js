@@ -5,14 +5,14 @@ const FuzzySet = require('fuzzyset');
 const utils = require("./utils");
 const beep = require('beepbeep');
 
-const gasLimit = 500000;
-const transactionCost = 201101;
-const tradeVal = '0.02';
-const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
-const sellMultThresh = 0.3;
-const transactionsPerSecondThresh = 0.5;
-const numTransactionsThresh = 5;
-const maxTransPriceThresh = 40;
+const gasLimit = 500000; //maximum units of gas that you want to pay
+const transactionCost = 201101; //doesn't change
+const tradeVal = '0.02'; //amount of ether you want to trade
+const amountIn = ethers.utils.parseUnits(tradeVal, 'ether'); //don't change
+const sellMultThresh = 0.3; //amount of profit you need to be able to sell. ex: .3 = 30% of buy price 2 = 200% of buy price
+const transactionsPerSecondThresh = 0.5; //number of transactions that need to happen before getting into position
+const numTransactionsThresh = 5; //number of transaction that need to occur before buy
+const maxTransPriceThresh = 40; //maximum amount you want to pay for a transaction
 const alertBeepNum = 20;
 
 let inPosition = false;
