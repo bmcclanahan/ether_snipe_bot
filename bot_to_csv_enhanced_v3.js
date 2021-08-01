@@ -17,6 +17,8 @@ const alertBeepNum = 20;
 
 let inPosition = false;
 
+let live_trade = false;
+
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
@@ -50,7 +52,7 @@ async function getGasPrices(){
 
 const addresses = {
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f', 
+  factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   router: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
   recipient: '0x76e7180a22a771267d3bb1d2125a036ddd8344d9'
 }
@@ -103,8 +105,8 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
     beep(alertBeepNum);
     //We buy for 0.1 ETH of the new token
     let gasPrice = await getGasPrices();
-    let overrides = { 
-      gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'), 
+    let overrides = {
+      gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'),
       gasLimit: gasLimit
     };
     let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
@@ -116,12 +118,12 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
       );
       return;
     }
-    
+
     const amounts = await router.getAmountsOut(amount, [tokenIn, tokenOut]);
     //Our execution price will be a bit different, we need some flexbility
     // allow 50% slippage
     const amountOutMin = amounts[1].sub(amounts[1].div(2));
-    
+
     let message = `
       Buying new token
       =================
@@ -141,7 +143,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
         Date.now() + 1000 * 60 * 2, //2 minutes
         overrides
       );
-      const receipt = await tx.wait(); 
+      const receipt = await tx.wait();
       message = `
         Transaction receipt: ${receipt}
       `
@@ -167,7 +169,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
       `
       console.log(message);
       utils.sendNotification(phoneNumbers, message);
-      
+
       const approvedTokenBalance = await utils.set_allowance_token(account, tokenOut, ethers.constants.MaxUint256, addresses, overrides);
 
       message = `
@@ -219,7 +221,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     newListings[token].transactionThresholdBreached = true;
     transactionThreshFirst = true;
   }
-    
+
   let message = `
   Liquitidy modified for token
   =================
@@ -254,7 +256,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
   //Buy the token
   //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-  if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
+  if(live_trade && !inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
     inPosition = true;
     message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
     utils.sendNotification(phoneNumbers, message);
@@ -275,7 +277,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
           `
           console.log(message);
         }
-          
+
       }
     );
 
@@ -285,11 +287,11 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
 
 
 factory.on('PairCreated', async (token0, token1, pairAddress) => {
-  
+
   var creationDate = new Date(Date.now() + offset*60*1000)
   var date = creationDate.toISOString()
                          .replace(/T/, ' ')      // replace T with a space
-                         .replace(/\..+/, '') 
+                         .replace(/\..+/, '')
   console.log(`
     New pair detected
     =================
@@ -302,13 +304,13 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   //The quote currency needs to be WETH (we will pay with WETH)
   let tokenIn, tokenOut, position;
   if(token0 === addresses.WETH) {
-    tokenIn = token0; 
+    tokenIn = token0;
     tokenOut = token1;
     position = 1;
   }
 
   if(token1 == addresses.WETH) {
-    tokenIn = token1; 
+    tokenIn = token1;
     tokenOut = token0;
     position = 0;
   }
@@ -331,7 +333,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       'function symbol() public view returns (string)'
     ],
     account
-  ); 
+  );
 
   let tokReserve0, tokReserve1;
   let ethLiquidity, tokLiquidity;
@@ -382,15 +384,15 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
 
 
- 
+
   date = listingDate.toISOString()
                      .replace(/T/, ' ')      // replace T with a space
                      .replace(/\..+/, '');
 
   let gasPrice = await getGasPrices();
-  
+
   let etherPrice = await getEtherPrice();
-  
+
   let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
   let transactionCostDollar = transactionCostEther * etherPrice;
 
@@ -403,7 +405,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   }
   catch(error) {
     etherTokenRatio = 0
-  }  
+  }
   let message = `
     Initial Liquidity for token
     =================
@@ -417,11 +419,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     transaction cost units: ${transactionCost.toString()}
     transaction cost ether: ${transactionCostEther}
     transaction cost dollar: ${transactionCostDollar}
-    ether price UDS: ${etherPrice} 
+    ether price UDS: ${etherPrice}
     time: ${date}
     any match: ${newListings[tokenOut].anyMatch}
     contract match: ${newListings[tokenOut].contractMatch}
-    ether price: ${etherPrice} 
+    ether price: ${etherPrice}
   `
   console.log(message);
   try{
@@ -435,10 +437,10 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     utils.sendNotification(phoneNumbers, message);
 
 
-  
-  
 
-  pair.on('Swap', 
+
+
+  pair.on('Swap',
     (function() {
       let tokenPosition = position; //could put tokenPosition in newListings object
       let token = tokenOut;
@@ -485,7 +487,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     })()
   )
 
-  pair.on('Mint', 
+  pair.on('Mint',
     (function() {
       let tokenPosition = position;
       let token = tokenOut;
@@ -512,12 +514,12 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     })()
   )
 
-  pair.on('Burn', 
+  pair.on('Burn',
     (function() {
       let tokenPosition = position;
       let token = tokenOut;
       let tokenPair = pairAddress;
-      
+
       return function(sender, amount0, amount1, to){
         let divisor = 10 ** 18
         let message = `
@@ -539,7 +541,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       }
     })()
   )
-      
+
   //purely informational logging
   pair.on('Sync', (function() {
     let token = tokenOut; // j is a copy of i only available to the scope of the inner function
@@ -558,11 +560,11 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
       let date = liquidityAddDate.toISOString()
                                  .replace(/T/, ' ')      // replace T with a space
                                  .replace(/\..+/, '');
-      
+
       let tokenLiquidity = tokLiquidity / (10 ** 18);
       let etherLiquidity = ethLiquidity / (10 ** 18);
       let liquidityRatio = etherLiquidity / tokenLiquidity;
-        
+
       let message = `
       Sync for token
       =================
@@ -580,4 +582,3 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     }
   })());
 });
-
