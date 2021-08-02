@@ -11,6 +11,8 @@ const tradeVal = '0.05';
 
 let inPosition = false;
 
+let live_trade = true;
+
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
@@ -64,6 +66,10 @@ console.log("after")
 
 beep(20)
 console.log('non blocking')
+
+if(live_trade){
+  console.log("trading")
+}
 
 
 /*s

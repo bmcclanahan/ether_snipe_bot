@@ -14,34 +14,22 @@ const transactionsPerSecondThresh = 0.5;
 const numTransactionsThresh = 5;
 const maxTransPriceThresh = 40;
 const alertBeepNum = 20;
+const staticPrice = 350;
 
 let inPosition = false;
 
-let live_trade = true;
+let live_trade = false;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
 let possibleContractStarts = ['0x87912MLJ90192'];
 
-
-
-let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
-let gasApiURL = `https://ethgasstation.info/api/ethgasAPI.json?api-key=${gasApiKey.substring(0, gasApiKey.length - 1)}`;
-let uniswapApi = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2';
-const csv_folder = '/Users/brianmcclanahan/ether_new_transactions';
+let gasApiURL = 'https://bscgas.info/gas';
+const csv_folder = '/Users/brianmcclanahan/binance_new_transactions';
 
 async function getEtherPrice(){
-  response = await axios.post(uniswapApi, {
-    query: `
-    {
-      bundle(id: "1" ) {
-        ethPrice
-      }
-    }
-    `
-  });
-  return Math.ceil(response.data.data.bundle.ethPrice);
+  return staticPrice;
 }
 
 
@@ -51,18 +39,19 @@ async function getGasPrices(){
 }
 
 const addresses = {
-  WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+  WETH: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+  factory: '0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73',
   router: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
-  recipient: '0x76e7180a22a771267d3bb1d2125a036ddd8344d9'
+  recipient: '0x860181C19032b551Ce0F081bc4329c1C8B57D468'
 }
 
-const infuraProvider = new ethers.providers.WebSocketProvider('wss://mainnet.infura.io/ws/v3/ff1e7694082149c0a0bc63d6bb8279fc');
-const alchemyProvider = new ethers.providers.WebSocketProvider('wss://eth-mainnet.alchemyapi.io/v2/U9D94i9IfuNroyIdgnYJIkroXz4U9yb4');
-const provider = new ethers.providers.FallbackProvider([infuraProvider, alchemyProvider], 1);
-const access = fs.readFileSync('/Users/brianmcclanahan/ether/eth_net_access.txt', 'utf8');
+const provider1 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+const provider2 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.defibit.io/');
+const provider3 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.ninicoin.io/');
+const provider = new ethers.providers.FallbackProvider([provider1, provider2, provider3], 1);
+const access = fs.readFileSync('/Users/brianmcclanahan/ether/binanance_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
-const account = wallet.connect(alchemyProvider);
+const account = wallet.connect(provider);
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
@@ -78,7 +67,7 @@ const router = new ethers.Contract(
 );
 addresses.WETH
 var newListings = {
-  '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': { //see if you can use addresses here
+  '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': { //see if you can use addresses here
     sellAttepmt: false,
     sellTrade: false
   } //to get swap function to work
@@ -106,7 +95,7 @@ async function swap_tokens(tokenIn, tokenOut, etherPrice, amount, setAllowance =
     //We buy for 0.1 ETH of the new token
     let gasPrice = await getGasPrices();
     let overrides = {
-      gasPrice: ethers.utils.parseUnits((gasPrice.fastest / 10).toString(), 'gwei'),
+      gasPrice: ethers.utils.parseUnits((gasPrice.instant).toString(), 'gwei'),
       gasLimit: gasLimit
     };
     let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
@@ -316,6 +305,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     tokenOut = token0;
     position = 0;
   }
+  console.log("attempting to create pair contract")
   let pair = new ethers.Contract(
     pairAddress,
     [
@@ -395,7 +385,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   let etherPrice = await getEtherPrice();
 
-  let transactionCostEther = (10 ** (-9)) * (gasPrice.fastest / 10) * transactionCost;
+  let transactionCostEther = (10 ** (-9)) * (gasPrice.instant) * transactionCost;
   let transactionCostDollar = transactionCostEther * etherPrice;
 
   let tokenLiquitityFloat = ethers.utils.formatEther(tokLiquidity);
