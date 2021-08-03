@@ -20,7 +20,7 @@ let inPosition = false;
 
 let live_trade = false;
 
-let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
+let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers2.txt', 'utf8').split("\n").filter(x => x.length !=0);
 let possibleSymbols = FuzzySet(['NightDoge']);
 let possibleNames = FuzzySet(['NightDoge']);
 let possibleContractStarts = ['0x87912MLJ90192'];
@@ -46,12 +46,12 @@ const addresses = {
 }
 
 const provider1 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
-const provider2 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.defibit.io/');
-const provider3 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.ninicoin.io/');
-const provider = new ethers.providers.FallbackProvider([provider1, provider2, provider3], 1);
+//const provider2 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.defibit.io/');
+//const provider3 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed1.ninicoin.io/');
+//const provider = new ethers.providers.FallbackProvider([provider1, provider2, provider3], 1);
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/binanance_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
-const account = wallet.connect(provider);
+const account = wallet.connect(provider1);
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
@@ -212,7 +212,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
 
   let message = `
-  Liquitidy modified for token
+  Liquitidy modified for token (Pancakeswap)
   =================
   token: ${token}
   token name: ${newListings[token].name}
