@@ -310,7 +310,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
   console.log(`contract match: ${typeof tokenIn !== 'undefined'}`)
   if(typeof tokenIn === 'undefined')
     return;
-  console.log("attempting to create pair contract ", , tokenOut)
+  console.log("attempting to create pair contract for ", pairAddress)
   let pair = new ethers.Contract(
     pairAddress,
     [
@@ -322,7 +322,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
     ],
     account
   );
-
+  console.log("attempting to create token contract for ", tokenOut)
   let tokenContract = new ethers.Contract(
     tokenOut,
     [
