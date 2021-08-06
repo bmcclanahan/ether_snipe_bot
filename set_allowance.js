@@ -38,7 +38,7 @@ async function getGasPrices(){
 
 const addresses = {
   WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f', 
+  factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   router: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
   recipient: '0xf11b2fc4f28150517af11c2c456cbe75e976f663',
   me: '0x76e7180a22a771267d3bb1d2125a036ddd8344d9',
@@ -52,5 +52,5 @@ const account = wallet.connect(provider);
 
 
 
-//utils.set_allowance(account, addresses.WETH, 10, addresses);
-utils.get_allowance(account, addresses.WETH, addresses);
+utils.set_allowance_ether(account, addresses.WETH, ethers.constants.MaxUint256, addresses);
+//utils.get_allowance(account, addresses.WETH, addresses);
