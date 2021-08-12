@@ -14,6 +14,7 @@ const transactionsPerSecondThresh = 0.5;
 const numTransactionsThresh = 5;
 const maxTransPriceThresh = 40;
 const alertBeepNum = 20;
+const sellWaitTime = 220; //3 minutes 40 seconds
 
 let inPosition = false;
 
@@ -267,7 +268,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
 
   //Sell the token
-  if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  220)){ //3 minutes 40 seconds
+  if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  sellWaitTime)){ 
     router.getAmountsOut(newListings[token].tokenBalance, [token, addresses.WETH]).then(
       x => {
         let profitRatio = x[1] / amountIn;
