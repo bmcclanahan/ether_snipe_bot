@@ -353,6 +353,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   tokenName = await tokenContract.name()
   tokenSymbol = await tokenContract.symbol()
+  tokenName = tokenName.replace(",", "")
   let listingDate = new Date(Date.now() + offset*60*1000)
   newListings[tokenOut] = { // might not need this
     pairAddress: pairAddress,

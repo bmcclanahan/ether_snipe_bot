@@ -51,7 +51,7 @@ const provider3 = new ethers.providers.JsonRpcProvider('https://bsc-dataseed2.de
 //const provider = new ethers.providers.FallbackProvider([provider1, provider2, provider3], 1);
 const access = fs.readFileSync('/Users/brianmcclanahan/ether/binanance_net_access.txt', 'utf8');
 const wallet = new ethers.Wallet(access.substring(0, access.length - 1));
-const account = wallet.connect(provider3);
+const account = wallet.connect(provider1);
 const factory = new ethers.Contract(
   addresses.factory,
   ['event PairCreated(address indexed token0, address indexed token1, address pair, uint)'],
@@ -348,6 +348,7 @@ factory.on('PairCreated', async (token0, token1, pairAddress) => {
 
   tokenName = await tokenContract.name()
   tokenSymbol = await tokenContract.symbol()
+  tokenName = tokenName.replace(",", "")
   let listingDate = new Date(Date.now() + offset*60*1000)
   newListings[tokenOut] = { // might not need this
     pairAddress: pairAddress,

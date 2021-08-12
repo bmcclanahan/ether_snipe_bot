@@ -52,5 +52,5 @@ const account = wallet.connect(provider);
 
 
 
-utils.set_allowance_ether(account, addresses.WETH, ethers.constants.MaxUint256, addresses);
+utils.set_allowance_ether(account, addresses.WETH, 1000, addresses);
 //utils.get_allowance(account, addresses.WETH, addresses);
