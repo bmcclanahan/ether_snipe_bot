@@ -8,4 +8,4 @@
 
 5. To start the bot run the following command in the terminal `./run.sh`
 
-6. To stop the bot press `Ctrl + C`
+6. To stop the bot press `Ctrl + C` 
