@@ -7,10 +7,10 @@ const beep = require('beepbeep');
 
 const gasLimit = 500000;
 const transactionCost = 201101;
-const tradeVal = '0.02';
+const tradeVal = '0.011';
 const amountIn = ethers.utils.parseUnits(tradeVal, 'ether');
 const sellMultThresh = 0.3;
-const transactionsPerSecondThresh = 0.5;
+const transactionsPerSecondThresh = 0.2;
 const numTransactionsThresh = 5;
 const maxTransPriceThresh = 40;
 const alertBeepNum = 20;
@@ -21,10 +21,11 @@ let inPosition = false;
 let live_trade = true;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
-let possibleSymbols = FuzzySet(['NightDoge']);
-let possibleNames = FuzzySet(['NightDoge']);
-let possibleContractStarts = ['0x87912MLJ90192'];
+let possibleSymbols = FuzzySet(['🔆 WIPE 🔆', 'WIPE']);
+let possibleNames = FuzzySet(['🔆 WIPE 🔆', 'WIPE']);
+let possibleContractStarts = [''];
 
+console.log('watching for ', possibleSymbols)
 
 
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
@@ -256,8 +257,8 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
     utils.sendNotification(phoneNumbers, message);
   }
   //Buy the token
-  //if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool){
-  if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
+  if((newListings[token].anyMatch || newListings[token].contractMatch) && !inPosition && newListings[token].transactionPerSecondBool && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
+  //if(!inPosition && (newListings[token].transactionPerSecond > transactionsPerSecondThresh) && (newListings[token].numTransactions >= numTransactionsThresh) && (newListings[token].initRatio < liquidityRatio)){
     message = "transaction threshold hit\nbot will now attempt to buy\n" + message;
     utils.sendNotification(phoneNumbers, message);
     inPosition = true;
@@ -268,7 +269,7 @@ function liquidityUpdate(newListings, token, tokenPosition, etherPrice, updateTy
   }
 
   //Sell the token
-  if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  sellWaitTime)){ 
+  if(newListings[token].inTrade && !newListings[token].sellTrade && (newListings[token].tokenBalance > 0) && (newListings[token].timeElapsed >=  sellWaitTime)){
     router.getAmountsOut(newListings[token].tokenBalance, [token, addresses.WETH]).then(
       x => {
         let profitRatio = x[1] / amountIn;
