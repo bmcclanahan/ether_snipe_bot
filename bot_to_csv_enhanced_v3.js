@@ -21,11 +21,13 @@ let inPosition = false;
 let live_trade = true;
 
 let phoneNumbers = fs.readFileSync('/Users/brianmcclanahan/ether/numbers.txt', 'utf8').split("\n").filter(x => x.length !=0);
-let possibleSymbols = FuzzySet(['🔆 WIPE 🔆', 'WIPE']);
-let possibleNames = FuzzySet(['🔆 WIPE 🔆', 'WIPE']);
+let symbolArray = ['🔆 WIPE 🔆', 'WIPE']
+let nameArray = ['🔆 WIPE 🔆', 'WIPE']
+let possibleSymbols = FuzzySet(symbolArray);
+let possibleNames = FuzzySet(nameArray);
 let possibleContractStarts = [''];
 
-console.log('watching for ', possibleSymbols)
+console.log('watching for ', symbolArray)
 
 
 let gasApiKey = fs.readFileSync('/Users/brianmcclanahan/ether/gasapi.txt', 'utf8');
