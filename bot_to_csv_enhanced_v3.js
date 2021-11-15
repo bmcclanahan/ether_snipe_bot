@@ -25,7 +25,7 @@ let symbolArray = ['🔆 WIPE 🔆', 'WIPE']
 let nameArray = ['🔆 WIPE 🔆', 'WIPE']
 let possibleSymbols = FuzzySet(symbolArray);
 let possibleNames = FuzzySet(nameArray);
-let possibleContractStarts = [''];
+let possibleContractStarts = ['kjhkjhjkhjkh'];
 
 console.log('watching for ', symbolArray)
 
